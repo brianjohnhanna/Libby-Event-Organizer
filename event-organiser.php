@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Event Organiser
+Plugin Name: Libby Event Organiser
 Plugin URI: http://www.wp-event-organiser.com
 Version: 3.1.0
 Description: Creates a custom post type 'events' with features such as recurring events, venues, Google Maps, calendar views and events and venue pages
@@ -219,7 +219,7 @@ if ( is_admin() ) :
 
 	/****** settings, venue and calendar pages******/
 	require_once( EVENT_ORGANISER_DIR.'event-organiser-settings.php' );
-	require_once( EVENT_ORGANISER_DIR.'event-organiser-venues.php' );
+	// require_once( EVENT_ORGANISER_DIR.'event-organiser-venues.php' );
 	require_once( EVENT_ORGANISER_DIR.'event-organiser-calendar.php' );
 
 	require_once( EVENT_ORGANISER_DIR.'event-organiser-debug.php' );
