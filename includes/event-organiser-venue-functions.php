@@ -221,7 +221,7 @@ function eo_venue_name($venue_slug_or_id=''){
  */
 function eo_get_venue_description($venue_slug_or_id=''){
 	$venue_id =  eo_get_venue_id_by_slugorid($venue_slug_or_id);
-	$description = eo_get_venue_meta($venue_id,'_description');
+	$description = term_description($venue_id,'event-venue');
 	$description = wptexturize($description);
 	$description = convert_chars($description);
 	$description = wpautop($description);
