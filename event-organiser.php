@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: Libby Event Organiser
-Plugin URI: http://www.wp-event-organiser.com
+Plugin URI: http://meetlibby.com
 Version: 3.1.0
-Description: Creates a custom post type 'events' with features such as recurring events, venues, Google Maps, calendar views and events and venue pages
-Author: Stephen Harris
-Author URI: http://www.stephenharris.info
+Description: Manage and organize events for libraries. Part of the Libby for Libraries suite of products. Visit MeetLibby.com to learn more.
+Author: Stirling Technologies
+Author URI: http://stboston.com
 Network: false
 Text Domain: eventorganiser
 Domain Path: /languages
