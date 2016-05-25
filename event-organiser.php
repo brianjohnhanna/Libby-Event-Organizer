@@ -253,3 +253,6 @@ require_once( EVENT_ORGANISER_DIR.'classes/class-eo-calendar-widget.php' );
 require_once( EVENT_ORGANISER_DIR.'classes/class-eo-widget-categories.php' );
 require_once( EVENT_ORGANISER_DIR.'classes/class-eo-widget-venues.php' );
 require_once( EVENT_ORGANISER_DIR.'classes/class-eventorganiser-shortcodes.php' );
+
+/****** Include the ST Libby Hooks & Additions ******/
+require_once( EVENT_ORGANISER_DIR.'st/init.php' );

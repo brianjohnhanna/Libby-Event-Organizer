@@ -1,0 +1,23 @@
+{
+  "name": "libby/libby-events",
+  "description": "Library event management for Wordpress",
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://wpackagist.org"
+    }
+  ],
+  "require": {
+    "wpackagist-plugin/cmb2": "*"
+  },
+  "extra": {
+      "installer-paths": {
+        "vendor/{$name}/": ["type:wordpress-plugin", "type:wordpress-theme"]
+    }
+  },
+  "autoload": {
+    "files": [
+      "vendor/cmb2/init.php"
+    ]
+  }
+}

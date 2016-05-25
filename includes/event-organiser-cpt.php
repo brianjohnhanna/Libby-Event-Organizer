@@ -56,6 +56,7 @@ function eventorganiser_create_event_taxonomies() {
 			'show_in_nav_menus'     => true,
 			'show_ui'               => true,//Use custom UI
 			'show_admin_column'     => true,//Custom quick edit
+			'meta_box_cb'           => false,
 			'update_count_callback' => '_update_post_term_count',
 			'query_var'             => true,
 			'rewrite'               => $venue_rewrite,
