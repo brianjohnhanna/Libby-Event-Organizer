@@ -204,15 +204,14 @@ class Libby_Events {
 
 		/**
 		 * Make sure that we only use the venues designated as meeting rooms for the booking
+		 *
+		 * @TODO May need to adjust filter to not display meeting rooms on the front-end calendar shortcode embed
 		 */
 		$this->loader->add_filter( 'get_terms', $plugin_public, 'booking_form_filter_meeting_rooms', 10, 3 );
 
 		/**
 		 * Register Custom AJAX Options for Booking Form
 		 */
-		$this->loader->add_action( 'wp_ajax_get_events_ajax', $plugin_public, 'get_events_ajax' );
-		$this->loader->add_action( 'wp_ajax_nopriv_get_events_ajax', $plugin_public, 'get_events_ajax' );
-
 		$this->loader->add_action( 'wp_ajax_get_venue_details_ajax', $plugin_public, 'get_venue_details_ajax' );
 		$this->loader->add_action( 'wp_ajax_nopriv_get_venue_details_ajax', $plugin_public, 'get_venue_details_ajax' );
 

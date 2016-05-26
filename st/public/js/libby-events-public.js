@@ -19,11 +19,17 @@
       venueEquipmentSection: $('#venueEquipment'),
 			venueEquipmentOptions: $('#venueEquipment').find('div'),
 			calendar: $('#calendar'),
+			eoDateTimePicker: $('#eo-fes-form-element-date-label').parent('.eo-fes-form-element '),
 			startDate: $('#eo-event-start-date'),
 			startTime: $('#eo-event-start-time'),
 			endDate: $('#eo-event-end-date'),
 			endTime: $('#eo-event-end-time'),
 			clearEvent: $('#clearEvent'),
+			eventDate: $('#eventDate'),
+			calendarWrapper:  $('#calWrapper'),
+			eventDateTable: $('#eventDateTable'),
+			eventStartTable: $('#eventStartTable'),
+			eventEndTable: $('#eventEndTable')
 		},
 		templates: {
 			setupOption: wp.template('setup-option'),
@@ -63,14 +69,14 @@
 					$(".fc-next-button").prop('disabled', false);
 				}
 			},
-			minTime: '08:00:00',
-			maxTime: '21:00:00',
 			allDaySlot: false,
 			defaultDate: moment().add(3, 'days'),
 			selectable: true,
 			selectHelper: true,
+			selectConstraint: "businessHours",
 			slotDuration: '00:15:00',
 			select: function(start, end) {
+
 				if(start.isBefore(s.minDate)) {
 					alert('All room requests must be made at least 48 hours in advance. Please select a later date.');
 					$('#calendar').fullCalendar('unselect');
@@ -81,6 +87,13 @@
 					$('#calendar').fullCalendar('unselect');
 	        return false;
 				}
+
+				if(!BookingForm.checkIsValidTime(start, end)) {
+					alert('You have selected in invalid time. Bookings must start 1 hour after the library opens and end one hour before the library closes.');
+					$('#calendar').fullCalendar('unselect');
+					return false;
+				}
+
 				var eventData;
 				eventData = {
 					start: start,
@@ -112,10 +125,6 @@
 			// events: fcEvents,
 			// resources: fcResources,
 			schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
-			businessHours: {
-		    start: function() { return s.dayStart; },
-		    end: function() { return s.dayEnd },
-			},
 		},
 		init: function() {
 			s = this.settings;
@@ -129,9 +138,12 @@
 			calendar = el.calendar.fullCalendar(this.calendarArgs);
 		},
 		initDatePicker() {
-			el.startDate.datepicker({
+			el.eventDate.datepicker({
 				minDate: s.minDate.toDate(),
-				maxDate: s.maxDate.toDate()
+				maxDate: s.maxDate.toDate(),
+				onSelect: function() {
+					BookingForm.changeCalendarDate($(this).datepicker('getDate'));
+				}
 			});
 		},
 		bindUIActions: function() {
@@ -164,6 +176,9 @@
 			el.startTime.val( start ? start.format('hh:mm A') : '' );
 			el.endDate.val( end ? end.format('MM-DD-YYYY') : '' );
 			el.endTime.val( end ? end.format('hh:mm A') : '' );
+			el.eventDateTable.html( start ? start.format('MM-DD-YYYY') : ' ' );
+			el.eventStartTable.html( start ? start.format('hh:mm A') : '' );
+			el.eventEndTable.html( end ? end.format('hh:mm A') : '' );
 		},
 		getVenueAjax: function(venueId) {
 			if (venueId > 0){
@@ -172,16 +187,17 @@
 	        venueId: venueId
 	      };
 	      $.getJSON(ajax_url, data, function(response){
+					console.log(response);
 					venue = response;
 	        BookingForm.setVenueInfo(response);
 					BookingForm.setOpenDays(response.hours);
 					el.venueOptions.show();
-					calendar.css({'visibility' : 'visible', 'height' : 'auto' });
+					el.calendarWrapper.removeClass('hidden');
 				});
 			}
 			else {
 				el.venueOptions.hide();
-				calendar.css({'visibility' : 'hidden', 'height' : 0 } );
+				el.calendarWrapper.addClass('hidden');
 			}
 		},
 		setVenueInfo: function(infoObject) {
@@ -229,24 +245,65 @@
 		changeCalendarDate: function(date) {
 			calendar.fullCalendar('gotoDate', date);
 		},
+		getOpenTime: function(startObj) {
+			var dayOfWeek = startObj.format('E');
+			for (var i = 0; i < venue.hours.length; i++) {
+				if (venue.hours[i].day_of_week == dayOfWeek && !venue.hours[i].closed) {
+					return venue.hours[i].opening_hour.replace(/\D/g, '');
+				}
+			}
+		},
+		getClosingTime: function(endObj) {
+			var dayOfWeek = endObj.format('E');
+			for (var i = 0; i < venue.hours.length; i++) {
+				if (venue.hours[i].day_of_week == dayOfWeek) {
+					return venue.hours[i].closing_hour.replace(/\D/g, '');
+				}
+			}
+		},
+		checkIsValidTime: function(startObj, endObj) {
+			var dayOfWeek = startObj.format('E');
+			var dayHours = venue.hours.filter(function(v){
+				return v.day_of_week == dayOfWeek;
+			});
+			dayHours = dayHours[0];
+			if(dayHours.closed) {
+				return false;
+			}
+			var openHour = moment(dayHours.opening_hour, 'h:mm A').format("HH");
+			if(startObj.isBefore(startObj.clone().set('hour', openHour).add(1, 'hours'))) {
+				return false;
+			}
+			var closeHour = moment(dayHours.closing_hour, 'h:mm A').format("HH");
+			if(endObj.isAfter(endObj.clone().set('hour', closeHour).subtract(2, 'hours'))) {
+				return false;
+			}
+			return true;
+		},
 		setOpenDays: function(hours) {
 			if (!hours) return false;
 			var openDays = hours.filter(function(obj){
 				return !obj.closed;
 			});
 			var daysOfWeek = openDays.map(function(obj){
-				return obj.day_of_week;
+				return parseInt(obj.day_of_week) === 7 ? parseInt(obj.day_of_week) - 7 : parseInt(obj.day_of_week);
 			});
-			calendar.fullCalendar({
+			calendar.fullCalendar('destroy');
+			//We have to destroy the calendar and recreate it with the new days of week
+			var options = {
 				businessHours: {
+					start: s.dayStart,
+					end: s.dayEnd,
 					dow: daysOfWeek
-				}
-			});
+				},
+				minTime: s.dayStart,
+				maxTime: s.dayEnd,
+			};
+			var calendarArgs = $.extend(this.calendarArgs, options);
+			calendar.fullCalendar(calendarArgs);
 		},
 		disableEventStartEndTime: function() {
-			el.startTime.css({'visibility':'hidden'});
-			el.endDate.css({'visibility':'hidden'});
-			el.endTime.css({'visibility':'hidden'});
+			el.eoDateTimePicker.addClass('hidden');
 		}
 	};
 

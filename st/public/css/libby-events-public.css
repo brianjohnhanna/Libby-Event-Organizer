@@ -14,7 +14,7 @@ input[type="text"], input[type="email"], input[type="url"], input[type="password
   width: auto;
 }
 
-#calendar {
+.hidden {
   margin-top: 20px;
   visibility: hidden;
   height: 0;
@@ -28,4 +28,16 @@ input[type="text"], input[type="email"], input[type="url"], input[type="password
 
 span[aria-labelledby="eo-fes-form-element-date-event-end-label"] label:last-of-type {
   display: none!important;
+}
+
+label#eo-fes-form-element-date-event-end-label,
+label#eo-fes-form-element-date-event-start-label {
+  display: none;
+}
+
+td#eventDateTable,
+td#eventStartTable,
+td#eventEndTable {
+  min-height: 2em;
+  height: 2em;
 }

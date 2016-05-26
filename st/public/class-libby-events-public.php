@@ -162,7 +162,8 @@ class Libby_Events_Public {
 		$venue = get_term_by( 'id', (int)$venue_id, 'event-venue' );
 		$venue_slug = isset($venue->slug) ? $venue->slug : false;
 		$eo_events = eo_get_events(array(
-			'event-venue' => $venue_slug
+			'event-venue' => $venue_slug,
+			'event_start_after' => 'today',
 		));
 		$events = array();
 		foreach ( $eo_events as $event ){
@@ -184,8 +185,8 @@ class Libby_Events_Public {
 	}
 
 	/**
-	 * Modify the output to show start/end times with scheduler
-	 * @return [type] [description]
+	 * Show the booking calendar so people can select a slot after selecting
+	 * a venue in eo_fes_venue_info_display()
 	 */
 	public function eo_fes_start_end_display( $element ) {
 		wp_enqueue_script( $this->plugin_name . '-fc-scheduler' );
@@ -195,12 +196,23 @@ class Libby_Events_Public {
 		include_once FORM_FIELD_TEMPLATE_DIR . 'booking-calendar.php';
 	}
 
+	/**
+	 * Add any custom taxonomies to the room booking form
+	 */
 	public function eo_fes_taxonomy_display() {
 		$group_types = get_terms(array(
 			'taxonomy' => 'group_type',
 			'hide_empty' => false
 		));
 		include_once FORM_FIELD_TEMPLATE_DIR . 'group-type.php';
+	}
+
+	/**
+	 * Display the setup and breakdown time options
+	 * for booking a room
+	 */
+	public function eo_fes_setup_breakdown_display() {
+		include_once FORM_FIELD_TEMPLATE_DIR . 'setup-breakdown.php';
 	}
 
 	/**
