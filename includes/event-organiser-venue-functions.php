@@ -293,8 +293,9 @@ function eo_get_venue_latlng($venue_slug_or_id=''){
  */
 function eo_get_venue_lat($venue_slug_or_id=''){
 	$venue_id =  eo_get_venue_id_by_slugorid($venue_slug_or_id);
-	$lat = eo_get_venue_meta($venue_id,'_lat');
-	$lat =  ! empty($lat) ? $lat : 0;
+	$branch_id = get_term_meta( $venue_id, '_libby_branch', true );
+	$location = get_field( 'address', $branch_id );
+	$lat = $location['lat'];
 	return $lat;
 }
 
@@ -311,8 +312,9 @@ function eo_get_venue_lat($venue_slug_or_id=''){
  */
 function eo_get_venue_lng($venue_slug_or_id=''){
 	$venue_id =  eo_get_venue_id_by_slugorid($venue_slug_or_id);
-	$lng = eo_get_venue_meta($venue_id,'_lng');
-	$lng =  ! empty($lng) ? $lng : 0;
+	$branch_id = get_term_meta( $venue_id, '_libby_branch', true );
+	$location = get_field( 'address', $branch_id );
+	$lng = $location['lng'];
 	return $lng;
 }
 
