@@ -168,9 +168,9 @@ class Libby_Events {
 		$this->loader->add_action( 'admin_head', $plugin_admin, 'filter_admin_notices' );
 
 		$venue_admin = new Libby_Events_Venue_Admin( $this->get_plugin_name(), $this->get_version() );
-		// $this->loader->add_action( 'admin_enqueue_scripts', $venue_admin, 'enqueue_scripts_styles' );
-		// $this->loader->add_action( 'wp_ajax_get_branch_location', $venue_admin, 'get_branch_location' );
 		$this->loader->add_action( 'cmb2_admin_init', $venue_admin, 'register_custom_fields' );
+		$this->loader->add_filter( 'manage_edit-event-venue_columns', $venue_admin, 'register_custom_columns' );
+		$this->loader->add_action( 'manage_event-venue_custom_column', $venue_admin, 'render_custom_columns', 10, 3 );
 
 		$settings_page = new Libby_Events_Settings_Page();
 		$this->loader->add_action( 'admin_menu', $settings_page, 'rename_settings_page' );

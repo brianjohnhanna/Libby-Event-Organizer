@@ -58,7 +58,7 @@ class Libby_Events_Venue_Admin {
 	 * Register the taxonomy custom fields
 	 */
 	public function register_custom_fields() {
-		$prefix = $this->plugin_name . '_venue_';
+		$prefix = '_libby_';
 		/**
 		 * Metabox to add fields to categories and tags
 		 */
@@ -74,27 +74,21 @@ class Libby_Events_Venue_Admin {
 			'name'     => __( 'Venue Details', 'libby' ),
 			'id'       => $prefix . 'extra_info',
 			'type'     => 'title',
-			'on_front' => false,
 		) );
 
 		$venue_info->add_field( array(
-		    'name' => 'Staff Only',
-				'desc' => 'Venue that can only be booked by website users.',
-		    'id'   => $prefix . 'staff_only',
-		    'type' => 'checkbox',
-		) );
+		    'name' => 'Venue Type',
+		    'id'   => $prefix . 'type',
+				'type' => 'select',
+				'options' => array(
+					'branch' => 'Branch',
+					'meeting_room' => 'Meeting Room',
+				),
+				'attributes'  => array(
+	        'required'    => 'required',
+	    	),
+			) );
 
-		$venue_info->add_field( array(
-			'name' => __( 'Seating Limit', 'libby' ),
-			'id'   => $prefix . 'seating_limit',
-			'type' => 'text',
-		) );
-
-		$venue_info->add_field( array(
-			'name' => __( 'Room Number', 'libby' ),
-			'id'   => $prefix . 'room_number',
-			'type' => 'text',
-		) );
 
 		$venue_info->add_field( array(
 			'name' => __( 'Branch', 'libby' ),
@@ -118,16 +112,46 @@ class Libby_Events_Venue_Admin {
     	),
 		) );
 
+		$room_details = new_cmb2_box( array(
+			'id'               => $prefix . 'room_info',
+			'title'            => __( 'Venue Information', 'libby' ), // Doesn't output for term boxes
+			'object_types'     => array( 'term' ), // Tells CMB2 to use term_meta vs post_meta
+			'taxonomies'       => array( 'event-venue' ), // Tells CMB2 which taxonomies should have these fields
+			'new_term_section' => false, // Will display in the "Add New Category" section
+			'show_on_cb'			 => array( $this, 'is_room' )
+		) );
+
+		$room_details->add_field( array(
+		    'name' => 'Staff Only',
+				'desc' => 'Venue that can only be booked by website users.',
+		    'id'   => $prefix . 'staff_only',
+		    'type' => 'checkbox',
+		) );
+
+		$room_details->add_field( array(
+			'name' => __( 'Seating Limit', 'libby' ),
+			'id'   => $prefix . 'seating_limit',
+			'type' => 'text',
+		) );
+
+		$room_details->add_field( array(
+			'name' => __( 'Room Number', 'libby' ),
+			'id'   => $prefix . 'room_number',
+			'type' => 'text',
+		) );
+
+
 		$venue_setup_equipment = new_cmb2_box( array(
 			'id'               => $prefix . 'edit',
 			'title'            => __( 'Available Equipment', 'libby' ), // Doesn't output for term boxes
 			'object_types'     => array( 'term' ), // Tells CMB2 to use term_meta vs post_meta
 			'taxonomies'       => array( 'event-venue' ), // Tells CMB2 which taxonomies should have these fields
 			'new_term_section' => false, // Will display in the "Add New Category" section
+			'show_on_cb'			 => array( $this, 'is_room' )
 		) );
 
 		$venue_equipment = $venue_setup_equipment->add_field( array(
-		    'id'          => $prefix . '_equipment',
+		    'id'          => $prefix . 'available_equipment',
 		    'type'        => 'group',
 		    'description' => __( 'Configure available venue/room equipment', 'cmb2' ),
 		    // 'repeatable'  => false, // use false if you want non-repeatable group
@@ -145,7 +169,6 @@ class Libby_Events_Venue_Admin {
 		    'id'   => 'title',
 		    'type' => 'text',
 				'attributes'  => array(
-	        'required'    => 'required',
 					'placeholder' => 'E.g. Wireless Microphone, Podium'
 	    	),
 		) );
@@ -172,7 +195,7 @@ class Libby_Events_Venue_Admin {
 		) );
 
 		$venue_setup = $venue_setup_equipment->add_field( array(
-		    'id'          => $prefix . '_setup',
+		    'id'          => $prefix . 'setup_options',
 				'title'				=> 'Setup Options',
 		    'type'        => 'group',
 		    'description' => __( 'Configure available setup configurations', 'cmb2' ),
@@ -184,6 +207,7 @@ class Libby_Events_Venue_Admin {
 		        'sortable'      => true, // beta
 		        'closed'     => true, // true to have the groups closed by default
 		    ),
+				'show_on_cb'			 => array( $this, 'is_room' )
 		) );
 
 		$venue_setup_equipment->add_group_field( $venue_setup, array(
@@ -191,7 +215,6 @@ class Libby_Events_Venue_Admin {
 		    'id'   => 'title',
 		    'type' => 'text',
 				'attributes'  => array(
-	        'required'    => 'required',
 					'placeholder' => 'E.g. Lecture, Musical Performance'
 	    	),
 		) );
@@ -221,10 +244,36 @@ class Libby_Events_Venue_Admin {
 	}
 
 	/**
+	 * Determine whether the term is a meeting room for conditional display of
+	 * venue custom fields
+	 */
+	public function is_room() {
+		$tag_ID = (int) $_REQUEST['tag_ID'];
+		return get_term_meta( $tag_ID, '_libby_type', true) === 'meeting_room';
+
+	}
+
+	/**
 	 * Register the custom taxonomy columns
 	 */
-	public function register_custom_columns() {
+	public function register_custom_columns( $columns ) {
+		$columns = array(
+		'cb' => '<input type="checkbox" />',
+			'name' => 'Name',
+			'type' => 'Type',
+			'branch' => 'Branch'
+		);
+		return $columns;
+	}
 
+	public function render_custom_columns( $deprecated, $column, $term_id ) {
+		switch ( $column ) {
+			case 'type':
+				echo ucwords( str_replace( '_', ' ', get_term_meta( $term_id, '_libby_type', true ) ) );
+				break;
+			case 'branch':
+				echo get_the_title( (int)get_term_meta( $term_id, '_libby_branch', true ) );
+		}
 	}
 
 	/**
