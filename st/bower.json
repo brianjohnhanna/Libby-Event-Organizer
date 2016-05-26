@@ -1,0 +1,21 @@
+{
+  "name": "libby-events",
+  "authors": [
+    "Brian Hanna <brian@stboston.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "fullcalendar-scheduler": "^1.3.1"
+  }
+}

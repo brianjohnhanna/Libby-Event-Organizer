@@ -202,20 +202,32 @@ class Libby_Events {
 		$this->loader->add_filter( 'eventorganiser_widget_event_categories_dropdown_args', $plugin_public, 'dropdown_category_args' );
 		$this->loader->add_action( 'eventorganiser_widget_event_categories_args', $plugin_public, 'dropdown_category_args' );
 
+		/**
+		 * Make sure that we only use the venues designated as meeting rooms for the booking
+		 */
+		$this->loader->add_filter( 'get_terms', $plugin_public, 'booking_form_filter_meeting_rooms', 10, 3 );
+
+		/**
+		 * Register Custom AJAX Options for Booking Form
+		 */
 		$this->loader->add_action( 'wp_ajax_get_events_ajax', $plugin_public, 'get_events_ajax' );
 		$this->loader->add_action( 'wp_ajax_nopriv_get_events_ajax', $plugin_public, 'get_events_ajax' );
 
-		$this->loader->add_action( 'wp_ajax_get_venue_setup_options_ajax', $plugin_public, 'get_venue_setup_options_ajax' );
-		$this->loader->add_action( 'wp_ajax_nopriv_get_venue_setup_options_ajax', $plugin_public, 'get_venue_setup_options_ajax' );
+		$this->loader->add_action( 'wp_ajax_get_venue_details_ajax', $plugin_public, 'get_venue_details_ajax' );
+		$this->loader->add_action( 'wp_ajax_nopriv_get_venue_details_ajax', $plugin_public, 'get_venue_details_ajax' );
 
-		$this->loader->add_action( 'cmb2_init', $plugin_public, 'register_cmb2_event_form' );
-
-		$this->loader->add_action( 'eventorganiser_event_form_element_event_venue', $plugin_public, 'eo_fes_venue_display' );
-		$this->loader->add_action( 'eventorganiser_event_form_element_event_startend', $plugin_public, 'eo_fes_start_end_display' );
-		$this->loader->add_action( 'eventorganiser_event_form_element_event_category', $plugin_public, 'eo_fes_taxonomy_display' );
+		/**
+		 * Process booking form submissions with our custom values
+		 */
 		$this->loader->add_action( 'eventorganiser_validate_fes_form_submission', $plugin_public, 'eo_fes_process_form_submission', 10, 1 );
-		// $this->loader->add_filter( 'eventorganiser_fes_submit_event', $plugin_public, 'eo_fes_save_custom_vars', 10, 2 );
 		$this->loader->add_action( 'eventorganiser_fes_submitted_event', $plugin_public, 'eo_fes_save_custom_vars', 10, 2 );
+
+		/**
+		 * Add our custom actions for the booking form to be used in the form builder
+		 */
+		$this->loader->add_action( 'libby/events/form/group_type', $plugin_public, 'eo_fes_taxonomy_display' );
+		$this->loader->add_action( 'libby/events/form/calendar', $plugin_public, 'eo_fes_start_end_display' );
+		$this->loader->add_action( 'libby/events/form/venue_info', $plugin_public, 'eo_fes_venue_info_display' );
 
 	}
 

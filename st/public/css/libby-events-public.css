@@ -1,0 +1,31 @@
+/**
+ * All of the CSS for your public-facing functionality should be
+ * included in this file.
+ */
+table {
+  margin: 0;
+}
+
+.eo-fes-form-element .eo-event-form-venue-map-container {
+  display: none!important;
+}
+
+input[type="text"], input[type="email"], input[type="url"], input[type="password"], input[type="search"], input[type="tel"], input[type="number"], textarea {
+  width: auto;
+}
+
+#calendar {
+  margin-top: 20px;
+  visibility: hidden;
+  height: 0;
+}
+
+.eo-fes-form-element ul, .eo-fes-form-element li {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+span[aria-labelledby="eo-fes-form-element-date-event-end-label"] label:last-of-type {
+  display: none!important;
+}
