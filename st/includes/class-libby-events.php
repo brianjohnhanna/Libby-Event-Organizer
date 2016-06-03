@@ -104,7 +104,8 @@ class Libby_Events {
 		 */
 		// require_once plugin_dir_path( dirname( __FILE__ ) ) . 'vendor/event-organiser-fes/event-organiser-fes.php';
 
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'vendor/autoload.php';
+		// require_once plugin_dir_path( dirname( __FILE__ ) ) . 'vendor/autoload.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'vendor/cmb2/init.php';
 
 		/**
 		 * Load any API functions for the plugin
