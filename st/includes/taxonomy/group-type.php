@@ -42,6 +42,6 @@ if ( ! function_exists( 'libby_register_event_group_type_taxonomy' ) ) {
   	register_taxonomy( 'group-type', array( 'event' ), $args );
 
   }
-  add_action( 'init', 'libby_register_event_group_type_taxonomy', 0 );
+  add_action( 'init', 'libby_register_event_group_type_taxonomy', 99 );
 
 }

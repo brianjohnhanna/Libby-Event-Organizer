@@ -105,6 +105,10 @@ class Libby_Events {
 
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'vendor/autoload.php';
 
+		/**
+		 * Load any API functions for the plugin
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/api-functions.php';
 
 		/**
 		 * The class responsible for orchestrating the actions and filters of the

@@ -63,6 +63,7 @@ class Libby_Events_Public {
 		add_shortcode( 'event_booking_form', array( $this, 'register_booking_form_shortcode' ) );
 		add_shortcode( 'mini_calendar_with_list', array( $this, 'register_calendar_with_list_shortcode' ) );
 		add_shortcode( 'booking-form', array( $this, 'register_booking_form_shortcode_new') );
+		add_shortcode( 'ical-event-subscribe', array( $this, 'register_ical_subscribe_shortcode' ) );
 	}
 
 	/**
@@ -121,6 +122,14 @@ class Libby_Events_Public {
 		wp_localize_script( 'jquery-ui-datepicker', 'ajaxurl', admin_url( 'admin-ajax.php' ) );
 		$todays_events = $this->get_events_by_day();
 		include_once plugin_dir_path( __FILE__ ) . '/shortcodes/calendar-with-list.php';
+	}
+
+	/**
+	 * Register the shortcode for showing the ical event download button
+	 * @return [type] [description]
+	 */
+	public function register_ical_subscribe_shortcode() {
+		return eo_get_event_ical_link();
 	}
 
 	/**
@@ -278,6 +287,61 @@ class Libby_Events_Public {
 
 		return $terms;
 
+	}
+
+	public function download_event_ical( $query ) {
+		if ( !is_admin() && isset( $query->query_vars['ical_download'] ) ) {
+			$event_id = $query->query_vars['ical_download'];
+			$venue_id = eo_get_venue( $event_id );
+			$event = get_post( $event_id );
+			$scheduled_events = new WP_Query(array(
+				'post_type'         => 'event',
+				'event_start_after' => 'today',
+				'posts_per_page'    => 100,
+				'event_series'      => $event_id,
+				'group_events_by'   => 'occurrence',
+			));
+
+			$ical = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//hacksw/handcal//NONSGML v1.0//EN\r\nCALSCALE:GREGORIAN\r\n";
+			foreach ( $scheduled_events->get_posts() as $scheduled_event ) {
+				$ical .= sprintf(
+			    'BEGIN:VEVENT' . PHP_EOL .
+			    'DTEND:%1$s' . PHP_EOL .
+			    'UID:%2$s' . PHP_EOL .
+			    'DTSTAMP:%3$s' . PHP_EOL .
+			    'LOCATION:%4$s' . PHP_EOL .
+			    'DESCRIPTION:%5$s' . PHP_EOL .
+			    'URL;VALUE=URI:%6$s' . PHP_EOL .
+			    'SUMMARY:%7$s' . PHP_EOL .
+			    'DTSTART:%8$s' . PHP_EOL .
+			    'END:VEVENT' . PHP_EOL,
+					eo_get_the_end( 'Ymd\THis\Z', $event->ID, null, $scheduled_event->occurrence_id ), //End date/time
+					uniqid(),
+					date( 'Ymd\THis\Z' ), //date/timestamp
+					eo_get_venue_address( eo_get_venue( $event_id ) ), //Address
+					esc_html( $event->post_content ), //description
+					esc_url( get_the_permalink( $event->ID ) ), //URL
+					get_the_title( $event->ID ), //Title/Summary
+					eo_get_the_start( 'Ymd\THis\Z', $event->ID, null, $scheduled_event->occurrence_id ) //Start date/time
+			  );
+			}
+			$ical .= 'END:VCALENDAR';
+			header('Content-type: text/calendar; charset=utf-8');
+			header('Content-Disposition: attachment; filename=event.ics');
+			header('Connection: close');
+			die(trim($ical));
+		}
+	}
+
+	/**
+	 * Register any query vars needed by adding to the $vars array and
+	 * hooking into query_vars filter
+	 * @param array $vars The original vars plus our added vars
+	 */
+	public function add_query_vars( $vars ) {
+		$vars[] = 'ical_download';
+		$vars[] = 'occurrence';
+		return $vars;
 	}
 
 }
