@@ -1,0 +1,6 @@
+!css/*.min.css
+!js/*.min.js
+
+!vendor
+vendor/*
+!vendor/cmb2/

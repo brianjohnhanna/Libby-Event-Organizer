@@ -74,8 +74,8 @@ class Libby_Events_Public {
 	public function enqueue_styles() {
 
 		wp_register_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/libby-events-public.css', array(), $this->version, 'all' );
-		wp_register_style( $this->plugin_name . '-fc', plugin_dir_url( dirname( __FILE__ ) ) . 'bower_components/fullcalendar/dist/fullcalendar.min.css', array(), $this->version, 'all' );
-		wp_register_style( $this->plugin_name . '-fc-scheduler', plugin_dir_url( dirname( __FILE__ ) ) . 'bower_components/fullcalendar-scheduler/dist/scheduler.min.css', array( $this->plugin_name . '-fc' ), $this->version, 'all' );
+		wp_register_style( $this->plugin_name . '-fc', plugin_dir_url( dirname( __FILE__ ) ) . 'css/fullcalendar.min.css', array(), $this->version, 'all' );
+		//wp_register_style( $this->plugin_name . '-fc-scheduler', plugin_dir_url( dirname( __FILE__ ) ) . 'bower_components/fullcalendar-scheduler/dist/scheduler.min.css', array( $this->plugin_name . '-fc' ), $this->version, 'all' );
 	}
 
 	/**
@@ -85,10 +85,10 @@ class Libby_Events_Public {
 	 */
 	public function enqueue_scripts() {
 
-		wp_register_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/libby-events-public.js', array( 'jquery', 'jquery-ui-datepicker', $this->plugin_name . '-fc-scheduler', 'wp-util' ), $this->version, false );
-		wp_register_script( $this->plugin_name . '-moment',  plugin_dir_url( dirname( __FILE__ ) ) . 'bower_components/moment/min/moment.min.js', array('jquery'), $this->version, true );
-		wp_register_script( $this->plugin_name . '-fc',  plugin_dir_url( dirname( __FILE__ ) ) . 'bower_components/fullcalendar/dist/fullcalendar.min.js', array( $this->plugin_name . '-moment' ), $this->version, true );
-		wp_register_script( $this->plugin_name . '-fc-scheduler',  plugin_dir_url( dirname( __FILE__ ) ) . 'bower_components/fullcalendar-scheduler/dist/scheduler.min.js', array( $this->plugin_name . '-fc' ), $this->version, true );
+		wp_register_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/libby-events-public.js', array( 'jquery', 'jquery-ui-datepicker', $this->plugin_name . '-fc', 'wp-util' ), $this->version, false );
+		wp_register_script( $this->plugin_name . '-moment',  plugin_dir_url( dirname( __FILE__ ) ) . 'js/moment.min.js', array('jquery'), $this->version, true );
+		wp_register_script( $this->plugin_name . '-fc',  plugin_dir_url( dirname( __FILE__ ) ) . 'js/fullcalendar.min.js', array( $this->plugin_name . '-moment' ), $this->version, true );
+		// wp_register_script( $this->plugin_name . '-fc-scheduler',  plugin_dir_url( dirname( __FILE__ ) ) . 'bower_components/fullcalendar-scheduler/dist/scheduler.min.js', array( $this->plugin_name . '-fc' ), $this->version, true );
 		// wp_localize_script( $this->plugin_name, 'fcResources', $this->get_scheduler_resource_array() );
 		wp_localize_script( $this->plugin_name , 'ajax_url', admin_url( 'admin-ajax.php' ) );
 	}
@@ -222,8 +222,8 @@ class Libby_Events_Public {
 	 * a venue in eo_fes_venue_info_display()
 	 */
 	public function eo_fes_start_end_display( $element ) {
-		wp_enqueue_script( $this->plugin_name . '-fc-scheduler' );
-		wp_enqueue_style( $this->plugin_name . '-fc-scheduler' );
+		wp_enqueue_script( $this->plugin_name . '-fc' );
+		wp_enqueue_style( $this->plugin_name . '-fc' );
 		wp_enqueue_script( $this->plugin_name );
 		wp_enqueue_style( $this->plugin_name );
 		include_once FORM_FIELD_TEMPLATE_DIR . 'booking-calendar.php';
