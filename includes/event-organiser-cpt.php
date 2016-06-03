@@ -54,8 +54,9 @@ function eventorganiser_create_event_taxonomies() {
 			'labels'                => $venue_labels,
 			'public'                => true,
 			'show_in_nav_menus'     => true,
-			'show_ui'               => false,//Use custom UI
-			'show_admin_column'     => false,//Custom quick edit
+			'show_ui'               => true,//Use custom UI
+			'show_admin_column'     => true,//Custom quick edit
+			'meta_box_cb'           => false,
 			'update_count_callback' => '_update_post_term_count',
 			'query_var'             => true,
 			'rewrite'               => $venue_rewrite,
@@ -967,7 +968,7 @@ function eventorganiser_edit_venue_link($link, $term_id, $taxonomy){
 
 	return $link;
 }
-add_filter('get_edit_term_link','eventorganiser_edit_venue_link',10,3);
+// add_filter('get_edit_term_link','eventorganiser_edit_venue_link',10,3);
 
 
 /**

@@ -1,11 +1,11 @@
 <?php
 /*
-Plugin Name: Event Organiser
-Plugin URI: http://www.wp-event-organiser.com
+Plugin Name: Libby Event Organiser
+Plugin URI: http://meetlibby.com
 Version: 3.1.0
-Description: Creates a custom post type 'events' with features such as recurring events, venues, Google Maps, calendar views and events and venue pages
-Author: Stephen Harris
-Author URI: http://www.stephenharris.info
+Description: Manage and organize events for libraries. Part of the Libby for Libraries suite of products. Visit MeetLibby.com to learn more.
+Author: Stirling Technologies
+Author URI: http://stboston.com
 Network: false
 Text Domain: eventorganiser
 Domain Path: /languages
@@ -219,7 +219,7 @@ if ( is_admin() ) :
 
 	/****** settings, venue and calendar pages******/
 	require_once( EVENT_ORGANISER_DIR.'event-organiser-settings.php' );
-	require_once( EVENT_ORGANISER_DIR.'event-organiser-venues.php' );
+	// require_once( EVENT_ORGANISER_DIR.'event-organiser-venues.php' );
 	require_once( EVENT_ORGANISER_DIR.'event-organiser-calendar.php' );
 
 	require_once( EVENT_ORGANISER_DIR.'event-organiser-debug.php' );
@@ -253,3 +253,6 @@ require_once( EVENT_ORGANISER_DIR.'classes/class-eo-calendar-widget.php' );
 require_once( EVENT_ORGANISER_DIR.'classes/class-eo-widget-categories.php' );
 require_once( EVENT_ORGANISER_DIR.'classes/class-eo-widget-venues.php' );
 require_once( EVENT_ORGANISER_DIR.'classes/class-eventorganiser-shortcodes.php' );
+
+/****** Include the ST Libby Hooks & Additions ******/
+require_once( EVENT_ORGANISER_DIR.'st/init.php' );

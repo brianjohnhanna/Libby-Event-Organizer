@@ -130,7 +130,8 @@ if ( ! class_exists( 'EO_Extension' ) ) {
 
 		public function hooks() {
 
-			add_action( 'admin_init', array( $this, 'check_dependencies' ) );
+			// We comment this out because it prevents the addition of add-ons
+			// add_action( 'admin_init', array( $this, 'check_dependencies' ) );
 
 			add_action( 'in_plugin_update_message-' . $this->slug, array( $this, 'plugin_update_message' ), 10, 2 );
 

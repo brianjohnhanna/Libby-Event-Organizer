@@ -221,7 +221,7 @@ function eo_venue_name($venue_slug_or_id=''){
  */
 function eo_get_venue_description($venue_slug_or_id=''){
 	$venue_id =  eo_get_venue_id_by_slugorid($venue_slug_or_id);
-	$description = eo_get_venue_meta($venue_id,'_description');
+	$description = term_description($venue_id,'event-venue');
 	$description = wptexturize($description);
 	$description = convert_chars($description);
 	$description = wpautop($description);
@@ -293,8 +293,9 @@ function eo_get_venue_latlng($venue_slug_or_id=''){
  */
 function eo_get_venue_lat($venue_slug_or_id=''){
 	$venue_id =  eo_get_venue_id_by_slugorid($venue_slug_or_id);
-	$lat = eo_get_venue_meta($venue_id,'_lat');
-	$lat =  ! empty($lat) ? $lat : 0;
+	$branch_id = get_term_meta( $venue_id, '_libby_branch', true );
+	$location = get_field( 'address', $branch_id );
+	$lat = $location['lat'];
 	return $lat;
 }
 
@@ -311,8 +312,9 @@ function eo_get_venue_lat($venue_slug_or_id=''){
  */
 function eo_get_venue_lng($venue_slug_or_id=''){
 	$venue_id =  eo_get_venue_id_by_slugorid($venue_slug_or_id);
-	$lng = eo_get_venue_meta($venue_id,'_lng');
-	$lng =  ! empty($lng) ? $lng : 0;
+	$branch_id = get_term_meta( $venue_id, '_libby_branch', true );
+	$location = get_field( 'address', $branch_id );
+	$lng = $location['lng'];
 	return $lng;
 }
 
@@ -396,37 +398,42 @@ function eo_venue_link($venue_slug_or_id=''){
 * * 'country'
 *
 * If used without any arguments uses the venue of the current event.
-* 
+*
 * ### Examples
 * Return the details of venue 16. **(Please note when using the ID it must be an integer - that is 16 not '16').**
 * <code>
-*     $address_details = eo_get_venue_address(16); 
+*     $address_details = eo_get_venue_address(16);
 *     //$address_details = eo_get_venue_address('16'); This method is incorrect.
-* </code>   
+* </code>
 * Print the post-code of venue 'my-venue-slug'
 * <code>
-*     $address_details = eo_get_venue_address('my-venue-slug'); 
-*     echo "The post code of 'my-venue-slug' is: ".$address_details['postcode']; 
-* </code>   
+*     $address_details = eo_get_venue_address('my-venue-slug');
+*     echo "The post code of 'my-venue-slug' is: ".$address_details['postcode'];
+* </code>
 * Return the details of the venue of event 23 we can use `{@see eo_get_venue()}` to obtain the venue ID.
 * <code>
-*   $venue_id = eo_get_venue(23); 
-*    $address_details = eo_get_venue_address($venue_id); 
-* </code>   
-* 
+*   $venue_id = eo_get_venue(23);
+*    $address_details = eo_get_venue_address($venue_id);
+* </code>
+*
 * @since 1.0.0
 * @param int|string $venue_slug_or_id The venue ID (as an integer) or slug (as a string). Uses venue of current event if empty.
 * @return array Array of venue address details
  */
 function eo_get_venue_address($venue_slug_or_id=''){
-	$address=array();	
 	$venue_id =  eo_get_venue_id_by_slugorid($venue_slug_or_id);
-	$address_keys = array_keys(_eventorganiser_get_venue_address_fields());
-	foreach( $address_keys as $meta_key ){
-		$key = trim($meta_key,'_');
-		$address[$key] = eo_get_venue_meta($venue_id,$meta_key);
-	}
-	return $address;
+	$branch_id = get_term_meta( $venue_id, '_libby_branch', true );
+	$location = get_field( 'address', $branch_id );
+	return $location['address'];
+
+
+	// $venue_id =  eo_get_venue_id_by_slugorid($venue_slug_or_id);
+	// $address_keys = array_keys(_eventorganiser_get_venue_address_fields());
+	// foreach( $address_keys as $meta_key ){
+	// 	$key = trim($meta_key,'_');
+	// 	$address[$key] = eo_get_venue_meta($venue_id,$meta_key);
+	// }
+	// return $address;
 }
 
 
@@ -759,10 +766,16 @@ function eo_get_venue_map( $venue_slug_or_id = '', $args = array() ){
 
 			//Venue tooltip description
 			$tooltip_content = '<strong>'.eo_get_venue_name($venue_id).'</strong>';
-			$address = array_filter(eo_get_venue_address($venue_id));
-			if( !empty($address) )
-				$tooltip_content .='<br />'.implode(', ',$address);
-			
+			$address = is_array(eo_get_venue_address($venue_id)) ? array_filter(eo_get_venue_address($venue_id)) : eo_get_venue_address($venue_id);
+			if( !empty($address) ) {
+				$tooltip_content .= '<br />';
+				$branch = eo_get_venue_meta( $venue_id, '_libby_branch', true );
+				if ( $branch ) {
+					$tooltip_content .= get_the_title( $branch ) . '<br />';
+				}
+				$tooltip_content .= is_array($address) ? implode(', ',$address) : $address;
+			}
+
 			/**
 			 * Filters the tooltip content for a venue.
 			 * 
@@ -850,8 +863,9 @@ function eo_get_venue_map( $venue_slug_or_id = '', $args = array() ){
  * @return mixed Will be an array if $single is false. Will be value of meta data field if $single
  *  is true.
  */
-function eo_get_venue_meta($venue_id, $key ='', $single=true){	
-	return get_metadata('eo_venue', $venue_id, $key, $single); 
+function eo_get_venue_meta($venue_id, $key ='', $single=true){
+	// We are using WP default term meta to store the venue meta now
+	return get_term_meta( $venue_id, $key, $single );
 }
 
 

@@ -1,0 +1,62 @@
+/*#venue_address {
+  display: none;
+}*/
+
+.libby-meta-container {
+  margin: 2em 0;
+}
+
+.libby-row {
+  border: 1px solid #f2f2f2;
+  margin-bottom: 2em;
+  background-color: #fff;
+}
+
+.libby-row header {
+  padding: 10px 0px 10px 10px;
+  background: #f2f2f2;
+  font-weight: bold;
+  font-size: 1.1em;
+  cursor: move;
+}
+
+
+.libby-row .field {
+  min-height: 40px;
+  padding: 10px;
+  border-bottom: 1px solid #f2f2f2;
+  margin-bottom: 1em;
+}
+
+.libby-row .field label {
+  font-weight: bold;
+  width: 200px;
+  max-width: 100%;
+  display: block;
+  float: left;
+  vertical-align: middle;
+}
+
+.libby-row .field input[type="text"],
+.libby-row .field input[type="email"] {
+  width: 25em;
+  max-width: 100%;
+  padding: 5px;
+}
+
+.libby-row .field textarea {
+  font-size: 14px;
+  max-width: 100%;
+  padding: 5px;
+  width: 500px;
+  height: 5em;
+}
+
+.libby-row footer {
+  min-height: 40px;
+}
+
+.libby-row footer a.remove-row {
+  float: right;
+  margin-right: 20px;
+}

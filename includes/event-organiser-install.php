@@ -67,20 +67,8 @@ function eventorganiser_site_install() {
 		KEY EndDate (EndDate)
 		)".$charset_collate;
 
-	//Venue meta table
-	$sql_venuemeta_table = "CREATE TABLE {$wpdb->eo_venuemeta} (
-		meta_id bigint(20) unsigned NOT NULL auto_increment,
-		eo_venue_id bigint(20) unsigned NOT NULL default '0',
- 		meta_key varchar(255) default NULL,
-		meta_value longtext,
-		PRIMARY KEY  (meta_id),
-		KEY eo_venue_id (eo_venue_id),
-		KEY meta_key (meta_key)
-		) $charset_collate; ";
-
 	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 	dbDelta( $sql_events_table );
-	dbDelta( $sql_venuemeta_table );
 
 	//Add options and capabilities
 	$eventorganiser_options = array(
