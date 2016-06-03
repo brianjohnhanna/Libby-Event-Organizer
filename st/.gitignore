@@ -4,3 +4,5 @@
 !vendor
 vendor/*
 !vendor/cmb2/
+!vendor/cmb2/css/*.min.css
+!vendor/cmb2/js/*.min.js
