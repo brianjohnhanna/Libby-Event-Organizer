@@ -73,7 +73,7 @@
 			defaultDate: moment().add(3, 'days'),
 			selectable: true,
 			selectHelper: true,
-			selectConstraint: "businessHours",
+			// selectConstraint: "businessHours",
 			slotDuration: '00:15:00',
 			select: function(start, end) {
 
@@ -114,10 +114,22 @@
 				calendar.fullCalendar('unselect');
 			},
 			eventDrop: function(event, delta, revertFunc) {
-				BookingForm.updateStartEndTime( event.start, event.end );
+				if(!BookingForm.checkIsValidTime(event.start, event.end)) {
+					alert('You have selected in invalid time. Bookings must start 1 hour after the library opens and end one hour before the library closes.');
+					revertFunc();
+				}
+				else {
+					BookingForm.updateStartEndTime( event.start, event.end );
+				}
 			},
 			eventResize: function(event, delta, revertFunc) {
-				BookingForm.updateStartEndTime( event.start, event.end );
+				if(!BookingForm.checkIsValidTime(event.start, event.end)) {
+					alert('You have selected in invalid time. Bookings must start 1 hour after the library opens and end one hour before the library closes.');
+					revertFunc();
+				}
+				else {
+					BookingForm.updateStartEndTime( event.start, event.end );
+				}
 			},
 			selectOverlap: false,
 			eventOverlap: false,
@@ -190,7 +202,7 @@
 					console.log(response);
 					venue = response;
 	        BookingForm.setVenueInfo(response);
-					BookingForm.setOpenDays(response.hours);
+					// BookingForm.setOpenDays(response.hours);
 					el.venueOptions.show();
 					el.calendarWrapper.removeClass('hidden');
 				});

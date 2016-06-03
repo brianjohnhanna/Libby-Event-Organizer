@@ -161,6 +161,21 @@ class Libby_Events_Public {
 		wp_die();
 	}
 
+	function get_events_by_day( $date = 'today' ) {
+		$events = eo_get_events(array(
+			'numberposts'=>20,
+			'ondate'=> $date,
+		));
+		return $events;
+	}
+
+	function get_events_ajax() {
+		$date = $_GET['date'];
+		$events = $this->get_events_by_day( $date );
+		echo wp_json_encode( $events );
+		wp_die();
+	}
+
 	/**
 	 * Get an events array that the scheduler
 	 * can use to display events
@@ -170,16 +185,22 @@ class Libby_Events_Public {
 		// We need the slug to use eo_get_events().
 		$venue = get_term_by( 'id', (int)$venue_id, 'event-venue' );
 		$venue_slug = isset($venue->slug) ? $venue->slug : false;
-		$eo_events = eo_get_events(array(
+		$event_args = array(
 			'event-venue' => $venue_slug,
 			'event_start_after' => 'today',
-		));
+		);
+		$eo_events = eo_get_events( $event_args );
 		$events = array();
 		foreach ( $eo_events as $event ){
+			$start = eo_get_the_start( DATETIMEOBJ, $event->ID, null, $event->occurrence_id);
+			$setup_time = get_post_meta( $event->ID, '_libby_setup_time', true );
+			if ( $setup_time ) {
+				$start->modify( '-' . $setup_time . ' mins' );
+			}
 			$events[] = array(
 				'id' => $event->ID,
 				'title' => $event->post_title,
-				'start' => eo_get_the_start( 'Y-m-d H:i:s', $event->ID, null, $event->occurrence_id),
+				'start' => $start->format( 'Y-m-d H:i:s' ),
 				'end' => eo_get_the_end( 'Y-m-d H:i:s', $event->ID, null, $event->occurrence_id ),
 				// 'rendering' => 'inverse-background'
 			);
@@ -187,6 +208,9 @@ class Libby_Events_Public {
 		return $events;
 	}
 
+	/**
+	 * Show the venue information on the booking form
+	 */
 	public function eo_fes_venue_info_display( $element ) {
 		wp_enqueue_script( $this->plugin_name );
 		wp_enqueue_style( $this->plugin_name );
@@ -210,7 +234,7 @@ class Libby_Events_Public {
 	 */
 	public function eo_fes_taxonomy_display() {
 		$group_types = get_terms(array(
-			'taxonomy' => 'group_type',
+			'taxonomy' => 'group-type',
 			'hide_empty' => false
 		));
 		include_once FORM_FIELD_TEMPLATE_DIR . 'group-type.php';
@@ -255,10 +279,24 @@ class Libby_Events_Public {
 		}
 	}
 
+	function eo_override_email_template( $body ) {
+		$str_to_remove = 'Powered by <a href="http://wp-event-organiser.com">Event Organiser</a>';
+		$body = str_replace(
+			$str_to_remove,
+			sprintf(
+				'Powered by %2$s',
+				get_site_url(),
+				LIBBY_EVENTS_NAME
+			),
+			$body
+		);
+		return $body;
+	}
+
 	/**
 	 * Filter out the available options on the booking form
 	 * so we only display meeting rooms.
-	 * @return [type] [description]
+	 * @return array $terms The filtered array of terms
 	 */
 	public function booking_form_filter_meeting_rooms( $terms, $taxonomies, $args ) {
 		//Only hide it for public facing pages, and only if they can't manage venues
@@ -266,20 +304,31 @@ class Libby_Events_Public {
 			return $terms;
 		}
 
-		if( ( is_array( $taxonomies ) && !in_array( 'event-venue', $taxonomies ) ) || ( !is_array( $taxonomies ) && $taxonomies != 'event-venue' ) ){
+		global $post;
+		if ( ! is_object( $post ) ) {
 			return $terms;
 		}
 
-		// We'll check if we're using the booking form shortcode, so we can filter out the return array.
-		global $post;
+		if( ! has_shortcode( $post->post_content, 'event_submission_form' ) ) {
+			return $terms;
+		}
 
-		if( has_shortcode( $post->post_content, 'event_submission_form' ) ) {
+		if( ( is_array( $taxonomies ) && in_array( 'event-venue', $taxonomies ) ) || ( !is_array( $taxonomies ) && $taxonomies == 'event-venue' ) ){
 			foreach ( $terms as $key => $term ){
 				$venue_id = !is_object( $term ) ? $term : intval( $term->term_id );
 				if ( eo_get_venue_meta( $venue_id, '_libby_type', true ) !== 'meeting_room' ){
 					unset( $terms[$key] );
 				}
 				elseif ( eo_get_venue_meta( $venue_id, '_libby_staff_only', true ) && !is_user_logged_in() ) {
+					unset( $terms[$key] );
+				}
+			}
+		}
+
+		if ( ( is_array( $taxonomies ) && in_array( 'event-category', $taxonomies ) ) || ( !is_array( $taxonomies ) && $taxonomies == 'event-category' ) ) {
+			foreach ( $terms as $key => $term ){
+				$cat_id = !is_object( $term ) ? $term : intval( $term->term_id );
+				if ( ! get_term_meta( $cat_id, '_libby_public', true ) ){
 					unset( $terms[$key] );
 				}
 			}

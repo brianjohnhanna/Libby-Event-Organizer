@@ -28,7 +28,8 @@
  * @author     Stirling Technologies <brian@stboston.com>
  */
 
-define('FORM_FIELD_TEMPLATE_DIR', plugin_dir_path( dirname( __FILE__ ) ) . 'public/booking-form-fields/');
+define( 'FORM_FIELD_TEMPLATE_DIR', plugin_dir_path( dirname( __FILE__ ) ) . 'public/booking-form-fields/' );
+define( 'LIBBY_EVENTS_NAME', 'Libby Event Organizer' );
 
 class Libby_Events {
 
@@ -140,6 +141,11 @@ class Libby_Events {
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-libby-venue-admin.php';
 
 		/**
+		 * The class responsible for defining all actions that occur in the admin area for event categories.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-libby-event-category-admin.php';
+
+		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-libby-events-settings.php';
@@ -167,14 +173,17 @@ class Libby_Events {
 		$this->loader->add_action( 'cmb2_admin_init', $plugin_admin, 'register_vendor_metaboxes_and_fields' );
 		$this->loader->add_filter( 'manage_event_posts_columns', $plugin_admin, 'register_custom_columns', 2 );
 		$this->loader->add_action( 'manage_event_posts_custom_column', $plugin_admin, 'render_custom_columns', 10, 2 );
-		$this->loader->add_action( 'init', $plugin_admin, 'register_taxonomy' );
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'remove_menu_pages', 200 );
 		$this->loader->add_action( 'admin_head', $plugin_admin, 'filter_admin_notices' );
+		$this->loader->add_action( 'pending_to_publish', $plugin_admin, 'send_event_published_email' );
 
 		$venue_admin = new Libby_Events_Venue_Admin( $this->get_plugin_name(), $this->get_version() );
 		$this->loader->add_action( 'cmb2_admin_init', $venue_admin, 'register_custom_fields' );
 		$this->loader->add_filter( 'manage_edit-event-venue_columns', $venue_admin, 'register_custom_columns' );
 		$this->loader->add_action( 'manage_event-venue_custom_column', $venue_admin, 'render_custom_columns', 10, 3 );
+
+		$event_category_admin = new Libby_Events_Event_Category_Admin( $this->get_plugin_name(), $this->get_version() );
+		$this->loader->add_action( 'cmb2_admin_init', $event_category_admin, 'register_custom_fields' );
 
 		$settings_page = new Libby_Events_Settings_Page();
 		$this->loader->add_action( 'admin_menu', $settings_page, 'rename_settings_page' );
@@ -220,10 +229,28 @@ class Libby_Events {
 		$this->loader->add_action( 'wp_ajax_nopriv_get_venue_details_ajax', $plugin_public, 'get_venue_details_ajax' );
 
 		/**
+		 * Register the AJAX actions for the calendar widget
+		 */
+		$this->loader->add_action( 'wp_ajax_get_events_ajax', $plugin_public, 'get_events_ajax' );
+		$this->loader->add_action( 'wp_ajax_nopriv_get_events_ajax', $plugin_public, 'get_events_ajax' );
+
+		/**
+		 * Process requests to download an ical for a single event
+		 */
+		$this->loader->add_action( 'parse_request', $plugin_public, 'download_event_ical' );
+		$this->loader->add_filter( 'query_vars', $plugin_public, 'add_query_vars' );
+
+		/**
 		 * Process booking form submissions with our custom values
 		 */
 		$this->loader->add_action( 'eventorganiser_validate_fes_form_submission', $plugin_public, 'eo_fes_process_form_submission', 10, 1 );
 		$this->loader->add_action( 'eventorganiser_fes_submitted_event', $plugin_public, 'eo_fes_save_custom_vars', 10, 2 );
+
+		/**
+		 * Filter out the EO branding on the email template and replace with Libby branding.
+		 *
+		 */
+		$this->loader->add_filter( 'eventorganiser_template_eo-email-template-event-organiser.php', $plugin_public, 'eo_override_email_template' );
 
 		/**
 		 * Add our custom actions for the booking form to be used in the form builder
@@ -231,6 +258,7 @@ class Libby_Events {
 		$this->loader->add_action( 'libby/events/form/group_type', $plugin_public, 'eo_fes_taxonomy_display' );
 		$this->loader->add_action( 'libby/events/form/calendar', $plugin_public, 'eo_fes_start_end_display' );
 		$this->loader->add_action( 'libby/events/form/venue_info', $plugin_public, 'eo_fes_venue_info_display' );
+		$this->loader->add_action( 'libby/events/form/setup_breakdown_time', $plugin_public, 'eo_fes_setup_breakdown_display' );
 
 	}
 

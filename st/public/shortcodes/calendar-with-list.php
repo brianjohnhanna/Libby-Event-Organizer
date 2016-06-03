@@ -70,7 +70,7 @@
 <ul id="miniCalEvents">
   <?php if ( isset( $todays_events ) && $todays_events ): ?>
     <?php foreach ( $todays_events as $event ) : ?>
-      <li><?php echo $event->post_title; ?></li>
+      <li><a href="<?php echo get_the_permalink( $event ) ; ?>"><?php echo get_the_title( $event ); ?></li>
     <?php endforeach; ?>
   <?php else: ?>
     No events for today.
@@ -96,11 +96,12 @@
           'date': date
         };
         $.get(ajaxurl, data, function(response){
+          console.log(response);
           var events = JSON.parse(response);
           $eventsList.html('');
           if (events.length > 0) {
             for (var i=0; i < events.length; i++) {
-              $eventsList.append('<li class="event">' + events[i]['post_title'] + '</li>');
+              $eventsList.append('<li class="event"><a href="' + events[i]['guid'] + '">' + events[i]['post_title'] + '</a></li>');
             }
           }
           else {

@@ -23,7 +23,7 @@
         <td colspan="3">
           <em>
             <?php
-              $timing_disclaimer = 'Please specify the time required INCLUDING setup and breakdown time so we know the total time you need the room for. This is not to exceed 4 hours unless you have requested special circumstances.';
+              $timing_disclaimer = 'This should be the actual start and end time of the event. This is not to exceed 4 hours unless you have requested special circumstances. You may specify required setup time below.';
               echo apply_filters( 'libby/events/form/timing_disclaimer', $timing_disclaimer );
             ?>
           </em>
