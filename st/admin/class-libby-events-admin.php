@@ -99,7 +99,7 @@ class Libby_Events_Admin {
 		// Setup Option
     $metabox->add_field( array(
         'name'       => __( 'Setup', 'libby' ),
-        'id'         => 'venue_setup',
+        'id'         => '_libby_setup_options',
         'type'       => 'radio',
 				'options_cb' => array( $this, 'get_venue_setup_options_array' ),
 				'show_on_cb' => array( $this, 'venue_has_setup_options' )
@@ -108,88 +108,123 @@ class Libby_Events_Admin {
 		// Setup Option
     $metabox->add_field( array(
         'name'       => __( 'Equipment', 'libby' ),
-        'id'         => 'venue_equipment',
+        'id'         => '_libby_equipment',
         'type'       => 'multicheck',
 				'options_cb' => array( $this, 'get_venue_equipment_options_array' ),
 				'show_on_cb' => array( $this, 'venue_has_equipment' )
     ) );
 
+		$metabox->add_field(array(
+			'name'       => __( 'Setup Time Required', 'libby' ),
+			'id'         => '_libby_setup_time',
+			'type'       => 'text',
+			'show_on_cb' => array( $this, 'is_submitted_event' )
+		) );
+
 		$metabox->add_field( array(
 				'name'       => __( 'Meeting Purpose', 'libby' ),
-				'id'         => '_eventorganiser_meeting_purpose',
+				'id'         => '_libby_meeting_purpose',
 				'type'       => 'textarea',
 				'attributes'  => array(
 					'readonly' => 'readonly',
+					'rows' => 4
 				),
+				'show_on_cb' => array( $this, 'is_submitted_event' )
 		) );
 
 		$metabox->add_field( array(
 				'name'       => __( 'Expected Attendance', 'libby' ),
-				'id'         => '_eventorganiser_expected_attendance',
+				'id'         => '_libby_expected_attendance',
 				'type'       => 'text',
-				'attributes'  => array(
-					'readonly' => 'readonly',
-				),
+				'show_on_cb' => array( $this, 'is_submitted_event' )
 		) );
 
 		// Regular text field
     $metabox->add_field( array(
         'name'       => __( 'Private Note', 'libby' ),
-        'id'         => '_eventorganiser_private_note',
+        'id'         => '_libby_private_note',
         'type'       => 'textarea',
 				'attributes'  => array(
 					'readonly' => 'readonly',
+					'rows' => 4
 				),
+				'show_on_cb' => array( $this, 'is_submitted_event' )
     ) );
 
 		// Regular text field
 		$metabox->add_field( array(
 				'name'       => __( 'Event Link', 'libby' ),
-				'id'         => '_eventorganiser_event_link',
+				'id'         => '_libby_link',
 				'type'       => 'text',
 		) );
 
 		$metabox->add_field( array(
 				'name'       => __( 'Fee', 'libby' ),
-				'id'         => '_eventorganiser_fee',
+				'id'         => '_libby_fee',
 				'type'       => 'text',
 				'attributes'  => array(
 					'readonly' => 'readonly',
 				),
+				'show_on_cb' => array( $this, 'is_submitted_event' )
 		) );
 
 	}
 
+	/**
+	 * Determine if the event was submitted
+	 * @return boolean
+	 */
+	public function is_submitted_event() {
+			global $post;
+			return get_post_meta( $post->ID, '_eventorganiser_fes' );
+	}
+
+	/**
+	 * Determine if the event venue has setup options to choose from
+	 * @return boolean
+	 */
 	public function venue_has_setup_options() {
 		global $post;
 		$venue_id = eo_get_venue( $post->ID );
-		return eo_get_venue_meta( $venue_id, '_setup_options', true ) ? true : false;
+		return eo_get_venue_meta( $venue_id, '_libby_setup_options', true ) ? true : false;
 	}
 
+	/**
+	 * Determine if the event venue has equipment to choose from
+	 * @return boolean
+	 */
 	public function venue_has_equipment() {
 		global $post;
 		$venue_id = eo_get_venue( $post->ID );
-		return eo_get_venue_meta( $venue_id, '_equipment', true ) ? true : false;
+		return eo_get_venue_meta( $venue_id, '_libby_available_equipment', true ) ? true : false;
 	}
 
+	/**
+	 * Create an options array of available setup options for CMB2 metaboxes
+	 * @return array An array of equipment keyed by the name of the setup option
+	 */
 	public function get_venue_setup_options_array() {
 		global $post;
 		$venue_id = eo_get_venue( $post->ID );
-		$venue_setup_options = eo_get_venue_meta( $venue_id, '_setup_options', true );
+		$venue_setup_options = eo_get_venue_meta( $venue_id, '_libby_setup_options', true );
 		$rtn = [];
 		foreach ( $venue_setup_options as $option ) {
-			$rtn[$option['name']] = $option['name'];
+			$rtn[$option['title']] = $option['title'];
 		}
 		return $rtn;
 	}
 
+	/**
+	 * Create an options array of available venue equipment for CMB2 metaboxes
+	 * @return array An array of equipment keyed by the name of the equipment
+	 */
 	public function get_venue_equipment_options_array() {
 		global $post;
 		$venue_id = eo_get_venue( $post->ID );
-		$venue_equipment = eo_get_venue_meta( $venue_id, '_equipment', true );
+		$venue_equipment = eo_get_venue_meta( $venue_id, '_libby_available_equipment', true );
 		$rtn = [];
 		foreach ( $venue_equipment as $equipment ) {
-			$rtn[$equipment['name']] = $equipment['name'];
+			$rtn[$equipment['title']] = $equipment['title'];
 		}
 		return $rtn;
 	}
@@ -222,59 +257,58 @@ class Libby_Events_Admin {
 	}
 
 	/**
-	 * Register our custom taxonomies
-	 * @param  [type] $post_status [description]
-	 * @return [type]              [description]
+	 * Hook into the pending_to_publish action to send a confirmation email for
+	 * submitted events when they are published
+	 * @param  obj $post The WP_Post object of the event
 	 */
-	public function register_taxonomy() {
+	public function send_event_published_email( $post ) {
+		// Make sure we have the correct post type, as this will fire for all post types.
+		if ( get_post_type( $post ) !== 'event' ) {
+			return;
+		}
 
-		$labels = array(
-			'name'                       => _x( 'Group Types', 'Taxonomy General Name', 'text_domain' ),
-			'singular_name'              => _x( 'Group Type', 'Taxonomy Singular Name', 'text_domain' ),
-			'menu_name'                  => __( 'Group Types', 'text_domain' ),
-			'all_items'                  => __( 'All Group Types', 'text_domain' ),
-			'parent_item'                => __( 'Parent Item', 'text_domain' ),
-			'parent_item_colon'          => __( 'Parent Item:', 'text_domain' ),
-			'new_item_name'              => __( 'New Group Type', 'text_domain' ),
-			'add_new_item'               => __( 'Add New Group Type', 'text_domain' ),
-			'edit_item'                  => __( 'Edit Group Type', 'text_domain' ),
-			'update_item'                => __( 'Update Group Type', 'text_domain' ),
-			'view_item'                  => __( 'View Group Type', 'text_domain' ),
-			'separate_items_with_commas' => __( 'Separate items with commas', 'text_domain' ),
-			'add_or_remove_items'        => __( 'Add or remove items', 'text_domain' ),
-			'choose_from_most_used'      => __( 'Choose from the most used', 'text_domain' ),
-			'popular_items'              => __( 'Popular Items', 'text_domain' ),
-			'search_items'               => __( 'Search Items', 'text_domain' ),
-			'not_found'                  => __( 'Not Found', 'text_domain' ),
-			'no_terms'                   => __( 'No items', 'text_domain' ),
-			'items_list'                 => __( 'Items list', 'text_domain' ),
-			'items_list_navigation'      => __( 'Items list navigation', 'text_domain' ),
-		);
-		$args = array(
-			'labels'                     => $labels,
-			'hierarchical'               => false,
-			'public'                     => true,
-			'show_ui'                    => true,
-			'show_admin_column'          => true,
-			'show_in_nav_menus'          => true,
-			'show_tagcloud'              => true,
-		);
-		register_taxonomy( 'group_type', array( 'event' ), $args );
+		// Make sure it was a front-end submitted event
+		if ( ! get_post_meta( $post->ID, '_eventorganiser_fes' ) ) {
+			return;
+		}
 
+		$eo_fes_data = get_post_meta( $post->ID, '_eventorganiser_fes_data', true );
+		$to = $eo_fes_data['email'];
+
+		$subject = sprintf( 'Your request for %s has been approved.', $post->post_title );
+		$body = sprintf(
+			'Dear %1$s, <br /><br /> The event administrators have approved your room request for %2$s. You can see it on the website at the following URL: <a href="%3$s" target="_blank">%3$s</a>. If you owe any fees associated with the event, please make sure to bring or mail a check to the library prior to the start of your event.',
+			implode( ' ', $eo_fes_data['name'] ),
+			$post->post_title,
+			get_the_permalink( $post )
+		);
+		$headers = array(
+			'Content-Type: text/html; charset=UTF-8',
+			sprintf( 'From: %s <%s>', get_bloginfo( 'name' ), get_option( 'admin_email' ) )
+		);
+
+		wp_mail( $to, $subject, $body, $headers );
 	}
 
 	/**
-	 * Remove the submenu page for the EO plugin if debug is off
-	 * @return [type] [description]
+	 * Remove the submenu page for the EO plugins if debug is off
 	 */
 	public function remove_menu_pages() {
 		if ( ! defined( 'WP_DEBUG') || ! WP_DEBUG ) {
 			remove_submenu_page( 'options-general.php', 'event-settings' );
+			remove_submenu_page( 'edit.php?post_type=event', 'eo-addons' );
 		}
 	}
 
+	/**
+	 * Ensure that EO doesn't add any notices that we don't want to appear
+	 *
+	 * We keep them on if we are in debug mode
+	 */
 	public function filter_admin_notices() {
-		echo '<style>#eo-notice{display:none;}</style>';
+		if ( ! defined( 'WP_DEBUG') || ! WP_DEBUG ) {
+			echo '<style>#eo-notice{display:none;}</style>';
+		}
 	}
 
 }
