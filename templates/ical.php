@@ -150,7 +150,7 @@ if ( have_posts() ) :
 			echo 'GEO:' . implode( ';', eo_get_venue_latlng( $venue ) ) . "\r\n";
 		endif;
 
-		if( get_the_author_meta( 'ID' ) ){
+		if ( get_the_author_meta( 'ID' ) ) {
 			$author_name  = eventorganiser_escape_ical_text( get_the_author() );
 			//@see https://github.com/stephenharris/Event-Organiser/issues/362
 			$author_name  = str_replace( '"', '', $author_name );
