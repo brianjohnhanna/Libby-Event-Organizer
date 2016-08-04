@@ -1,5 +1,5 @@
 (function($){
-	var s, calendar, venue,
+	var s, calendar, venueId, venue, events, currentCalDate, dailyHours,
 	BookingForm = {
 		settings: {
 			minDate: moment().add( 48, 'hours' ), // Tomorrow
@@ -68,12 +68,24 @@
 					$(".fc-next-button").removeClass('fc-state-disabled');
 					$(".fc-next-button").prop('disabled', false);
 				}
+
+				// Don't fire this stuff if it's the same day
+				// so we don't get into an infinite loop
+				if (currentView.start.isSame(currentCalDate, 'day')) {
+					return;
+				}
+
+				// Update the current calendar date pointer var
+				currentCalDate = currentView.start;
+				// Get the hours for the current day
+				var date = currentView.start.format('YYYY-MM-DD');
+				BookingForm.getDailyHours(date);
 			},
 			allDaySlot: false,
 			defaultDate: moment().add(3, 'days'),
 			selectable: true,
 			selectHelper: true,
-			// selectConstraint: "businessHours",
+			selectConstraint: "businessHours",
 			slotDuration: '00:15:00',
 			select: function(start, end) {
 
@@ -89,7 +101,6 @@
 				}
 
 				if(!BookingForm.checkIsValidTime(start, end)) {
-					alert('You have selected in invalid time. Bookings must start 1 hour after the library opens and end one hour before the library closes.');
 					$('#calendar').fullCalendar('unselect');
 					return false;
 				}
@@ -115,7 +126,6 @@
 			},
 			eventDrop: function(event, delta, revertFunc) {
 				if(!BookingForm.checkIsValidTime(event.start, event.end)) {
-					alert('You have selected in invalid time. Bookings must start 1 hour after the library opens and end one hour before the library closes.');
 					revertFunc();
 				}
 				else {
@@ -124,7 +134,6 @@
 			},
 			eventResize: function(event, delta, revertFunc) {
 				if(!BookingForm.checkIsValidTime(event.start, event.end)) {
-					alert('You have selected in invalid time. Bookings must start 1 hour after the library opens and end one hour before the library closes.');
 					revertFunc();
 				}
 				else {
@@ -134,9 +143,6 @@
 			selectOverlap: false,
 			eventOverlap: false,
 			editable: false,
-			// events: fcEvents,
-			// resources: fcResources,
-			schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
 		},
 		init: function() {
 			s = this.settings;
@@ -163,13 +169,10 @@
 				BookingForm.removeEvent(s.evtArray, true);
 			});
 			el.venueSelect.on('change', function(e){
-				BookingForm.getVenueAjax($(this).val());
-			});
-
-			//TODO: this event listener doesn't seem to work... Need to override the onSelect method
-			el.startDate.on('change', function(e){
-				console.log('changed');
-				// BookingForm.changeCalendarDate($(this).datepicker('getDate'));
+				// Set the venueId variable
+				venueId = $(this).val();
+				// Get the venue info via ajax
+				BookingForm.getVenueAjax(venueId);
 			});
 
 			BookingForm.disableEventStartEndTime();
@@ -199,10 +202,15 @@
 	        venueId: venueId
 	      };
 	      $.getJSON(ajax_url, data, function(response){
-					console.log(response);
 					venue = response;
-	        BookingForm.setVenueInfo(response);
-					// BookingForm.setOpenDays(response.hours);
+
+					BookingForm.setVenueInfo(response);
+
+					// Get the hours for the current day
+					currentCalDate = calendar.fullCalendar('getDate');
+					BookingForm.getDailyHours(currentCalDate.format('YYYY-MM-DD'));
+
+					// Show the venue options
 					el.venueOptions.show();
 					el.calendarWrapper.removeClass('hidden');
 				});
@@ -213,6 +221,7 @@
 			}
 		},
 		setVenueInfo: function(infoObject) {
+			events = infoObject.events;
 			this.setVenueDescription(infoObject.description);
 			this.setVenueSetupOptions(infoObject.setup);
 			this.setVenueEquipmentOptions(infoObject.equipment);
@@ -274,49 +283,70 @@
 			}
 		},
 		checkIsValidTime: function(startObj, endObj) {
-			var dayOfWeek = startObj.format('E');
-			var dayHours = venue.hours.filter(function(v){
-				return v.day_of_week == dayOfWeek;
-			});
-			dayHours = dayHours[0];
-			if(dayHours.closed) {
+			if(dailyHours.closed) {
+				alert('The library is closed on ' + startObj.format('dddd, MMMM Do') + '. Please select a different date.');
 				return false;
 			}
-			var openHour = moment(dayHours.opening_hour, 'h:mm A').format("HH");
-			if(startObj.isBefore(startObj.clone().set('hour', openHour).add(1, 'hours'))) {
+			var validStartHourObj = moment(dailyHours.open_time, 'hh:mm A').add(1, 'hours');
+			if(startObj.isBefore(startObj.clone().set('hour', validStartHourObj.format("HH")))) {
+				alert('You have selected in invalid time. Bookings must start 1 hour after the library opens. \n\nThe library opens at ' + dailyHours.open_time + ' on ' + startObj.format('dddd, MMMM Do'));
 				return false;
 			}
-			var closeHour = moment(dayHours.closing_hour, 'h:mm A').format("HH");
-			if(endObj.isAfter(endObj.clone().set('hour', closeHour).subtract(2, 'hours'))) {
+			var validEndHourObj = moment(dailyHours.close_time, 'hh:mm A').subtract(2, 'hours');
+			var endObjAdjusted = endObj.clone().subtract(1, 'minute');
+			if(endObjAdjusted.isAfter(endObj.clone().set('hour', validEndHourObj.format("HH")))) {
+				alert('You have selected in invalid time. Bookings must end one hour before the library closes.\n\nThe library closes at ' + dailyHours.close_time + ' on ' + endObj.format('dddd, MMMM Do'));
 				return false;
 			}
 			return true;
 		},
-		setOpenDays: function(hours) {
+		disableEventStartEndTime: function() {
+			el.eoDateTimePicker.addClass('hidden');
+		},
+		getDailyHours: function(date) {
+			var data = {
+				action: 'get_daily_hours_ajax',
+				venueId: venueId,
+				date: date
+			};
+			$.getJSON(ajax_url, data, function(response){
+				BookingForm.setDailyHours(response);
+			});
+		},
+		setDailyHours: function(hours) {
 			if (!hours) return false;
-			var openDays = hours.filter(function(obj){
-				return !obj.closed;
-			});
-			var daysOfWeek = openDays.map(function(obj){
-				return parseInt(obj.day_of_week) === 7 ? parseInt(obj.day_of_week) - 7 : parseInt(obj.day_of_week);
-			});
+			dailyHours = hours;
 			calendar.fullCalendar('destroy');
 			//We have to destroy the calendar and recreate it with the new days of week
 			var options = {
-				businessHours: {
-					start: s.dayStart,
-					end: s.dayEnd,
-					dow: daysOfWeek
-				},
+				businessHours: {},
 				minTime: s.dayStart,
 				maxTime: s.dayEnd,
+				defaultDate: currentCalDate,
+				eventSources: {
+					events: events,
+				}
 			};
+			if ( hours.closed ) {
+				// options.eventSources.events.push({
+				// 	start: currentCalDate.clone().set('hour', 8).format(),
+				// 	end: currentCalDate.clone().set('hour', 22).format(),
+				// 	title: 'Closed'
+				// });
+			}
+			else {
+				var dayStartObj = moment(hours.open_time, 'hh:mm A');
+				var dayEndObj = moment(hours.close_time, 'hh:mm A');
+				options.minTime = dayStartObj.format('HH:mm');
+				options.maxTime = dayEndObj.format('HH:mm');
+				options.businessHours = {
+					start: dayStartObj.clone().add(1, 'hour').format('HH:mm'),
+					end: dayEndObj.clone().subtract(1, 'hour').format('HH:mm')
+				};
+			}
 			var calendarArgs = $.extend(this.calendarArgs, options);
 			calendar.fullCalendar(calendarArgs);
 		},
-		disableEventStartEndTime: function() {
-			el.eoDateTimePicker.addClass('hidden');
-		}
 	};
 
 	$(document).ready(function() {

@@ -132,13 +132,17 @@ class Libby_Events_Public {
 		return eo_get_event_ical_link();
 	}
 
+	public function get_branch_id_by_venue_id( $venue_id ) {
+		return eo_get_venue_meta( (int)$venue_id, '_libby_branch', true );
+	}
+
 	/**
 	 * Retrieve the venue hours based on the date and the
 	 * @param  int $venue_id the ID of the venue
 	 * @return array $hours The hour types
 	 */
 	public function get_venue_hours( $venue_id, $date ) {
-		$branch_id = eo_get_venue_meta( (int)$venue_id, '_libby_branch', true );
+		$branch_id = $this->get_branch_id_by_venue_id( $venue_id );
 		$hours = libpress_get_hours( (int)$branch_id );
 		return $hours[0]['hours'];
 	}
@@ -177,6 +181,19 @@ class Libby_Events_Public {
 	}
 
 	/**
+	 * Get the hours for a particular day
+	 * @return json $venue_options
+	 */
+	public function get_daily_hours_ajax() {
+		$date = $_GET['date'];
+		$venue_id = $_GET['venueId'];
+		$branch_id = $this->get_branch_id_by_venue_id( $venue_id );
+		$daily_hours = libpress_get_hours_by_date( $branch_id, $date );
+		echo wp_json_encode( $daily_hours );
+		wp_die();
+	}
+
+	/**
 	 * Get an events array that the scheduler
 	 * can use to display events
 	 * @return array $events An array of events that gets sent to the calendar
@@ -202,7 +219,6 @@ class Libby_Events_Public {
 				'title' => $event->post_title,
 				'start' => $start->format( 'Y-m-d H:i:s' ),
 				'end' => eo_get_the_end( 'Y-m-d H:i:s', $event->ID, null, $event->occurrence_id ),
-				// 'rendering' => 'inverse-background'
 			);
 		}
 		return $events;

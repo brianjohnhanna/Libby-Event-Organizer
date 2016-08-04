@@ -228,6 +228,8 @@ class Libby_Events {
 		 */
 		$this->loader->add_action( 'wp_ajax_get_venue_details_ajax', $plugin_public, 'get_venue_details_ajax' );
 		$this->loader->add_action( 'wp_ajax_nopriv_get_venue_details_ajax', $plugin_public, 'get_venue_details_ajax' );
+		$this->loader->add_action( 'wp_ajax_get_daily_hours_ajax', $plugin_public, 'get_daily_hours_ajax' );
+		$this->loader->add_action( 'wp_ajax_nopriv_get_daily_hours_ajax', $plugin_public, 'get_daily_hours_ajax' );
 
 		/**
 		 * Register the AJAX actions for the calendar widget
