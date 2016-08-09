@@ -51,6 +51,9 @@
         }
     	},
 			viewRender: function(currentView){
+				if ( ! calendar ) {
+					return;
+				}
 				// Past
 				if (currentView.start.isBefore(s.minDate)) {
 					$(".fc-prev-button").prop('disabled', true);
@@ -316,7 +319,6 @@
 		setDailyHours: function(hours) {
 			if (!hours) return false;
 			dailyHours = hours;
-			calendar.fullCalendar('destroy');
 			//We have to destroy the calendar and recreate it with the new days of week
 			var options = {
 				businessHours: {},
@@ -328,24 +330,27 @@
 				}
 			};
 			if ( hours.closed ) {
-				// options.eventSources.events.push({
-				// 	start: currentCalDate.clone().set('hour', 8).format(),
-				// 	end: currentCalDate.clone().set('hour', 22).format(),
-				// 	title: 'Closed'
-				// });
+				// Make it so if they are closed there is no day of week they are open
+				options.businessHours.dow = [];
 			}
 			else {
 				var dayStartObj = moment(hours.open_time, 'hh:mm A');
 				var dayEndObj = moment(hours.close_time, 'hh:mm A');
+				if (!dayStartObj.isValid() || !dayEndObj.isValid()) {
+					console.error('Not a valid start or end time. Cannot properly render the business hours for the daily agenda view. Check that open_time and close_time are output in hh:mm A format.', hours);
+					return;
+				}
 				options.minTime = dayStartObj.format('HH:mm');
 				options.maxTime = dayEndObj.format('HH:mm');
 				options.businessHours = {
 					start: dayStartObj.clone().add(1, 'hour').format('HH:mm'),
-					end: dayEndObj.clone().subtract(1, 'hour').format('HH:mm')
+					end: dayEndObj.clone().subtract(1, 'hour').format('HH:mm'),
+					dow: [currentCalDate.format('d')] // Otherwise set it so there the day of week is the current date, hours take care of the rest
 				};
 			}
 			var calendarArgs = $.extend(this.calendarArgs, options);
-			calendar.fullCalendar(calendarArgs);
+			calendar.fullCalendar('destroy');
+			calendar = calendar.fullCalendar(calendarArgs);
 		},
 	};
 

@@ -205,21 +205,26 @@ class Libby_Events_Public {
 		$event_args = array(
 			'event-venue' => $venue_slug,
 			'event_start_after' => 'today',
+			'post_status' => array( 'pending', 'publish' )
 		);
 		$eo_events = eo_get_events( $event_args );
 		$events = array();
-		foreach ( $eo_events as $event ){
+		foreach ( $eo_events as $key => $event ){
 			$start = eo_get_the_start( DATETIMEOBJ, $event->ID, null, $event->occurrence_id);
 			$setup_time = get_post_meta( $event->ID, '_libby_setup_time', true );
 			if ( $setup_time ) {
 				$start->modify( '-' . $setup_time . ' mins' );
 			}
-			$events[] = array(
+			$events[$key] = array(
 				'id' => $event->ID,
 				'title' => $event->post_title,
 				'start' => $start->format( 'Y-m-d H:i:s' ),
 				'end' => eo_get_the_end( 'Y-m-d H:i:s', $event->ID, null, $event->occurrence_id ),
 			);
+			// We set pending events to render in the background...
+			if ( $event->post_status === 'pending' ) {
+				$events[$key]['rendering'] = 'background';
+			}
 		}
 		return $events;
 	}
