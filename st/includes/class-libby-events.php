@@ -157,6 +157,11 @@ class Libby_Events {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-libby-events-public.php';
 
+		/**
+		 * The class to register our shortcodes. Extends EventOrganiser_Shortcodes class.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-libby-events-shortcodes.php';
+
 		$this->loader = new Libby_Events_Loader();
 
 	}
