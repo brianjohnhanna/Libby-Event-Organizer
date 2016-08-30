@@ -292,4 +292,14 @@ class Libby_Events_Venue_Admin {
 		return $rtn;
 	}
 
+/**
+ * Adjust the args used to register the event venue taxonomy
+ * @param  array $venue_args The args used in register_taxonomy
+ * @return array The modified args
+ */
+	public function eo_filter_taxonomy_registration( $venue_args ) {
+		$venue_args['hierarchical'] = true;
+		return $venue_args;
+	}
+
 }

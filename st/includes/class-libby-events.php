@@ -76,6 +76,7 @@ class Libby_Events {
 		$this->version = '1.0.0';
 
 		$this->load_dependencies();
+		$this->init_update_check();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
 
@@ -157,8 +158,31 @@ class Libby_Events {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-libby-events-public.php';
 
+		/**
+		 * The class to register our shortcodes. Extends EventOrganiser_Shortcodes class.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-libby-events-shortcodes.php';
+
+		/**
+		 * The library responsible for checking for updates against our updates server
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/update-check/plugin-update-checker.php';
+
 		$this->loader = new Libby_Events_Loader();
 
+	}
+
+	public function init_update_check() {
+		$updateCheck = PucFactory::buildUpdateChecker(
+		    'http://stboston.com/updates/?action=get_metadata&slug=libby-event-organizer',
+		    plugin_dir_path( dirname( dirname( __FILE__ ) ) ) . 'event-organiser.php',
+				'libby-event-organizer'
+		);
+
+		$updateCheck->addQueryArgFilter(function( $queryArgs ){
+			$queryArgs['license_key'] = md5( get_site_url() );
+			return $queryArgs;
+		});
 	}
 
 	/**
@@ -182,6 +206,7 @@ class Libby_Events {
 		$this->loader->add_action( 'cmb2_admin_init', $venue_admin, 'register_custom_fields' );
 		$this->loader->add_filter( 'manage_edit-event-venue_columns', $venue_admin, 'register_custom_columns' );
 		$this->loader->add_action( 'manage_event-venue_custom_column', $venue_admin, 'render_custom_columns', 10, 3 );
+		$this->loader->add_filter( 'eventorganiser_register_taxonomy_event-venue', $venue_admin, 'eo_filter_taxonomy_registration' );
 
 		$event_category_admin = new Libby_Events_Event_Category_Admin( $this->get_plugin_name(), $this->get_version() );
 		$this->loader->add_action( 'cmb2_admin_init', $event_category_admin, 'register_custom_fields' );
@@ -238,6 +263,12 @@ class Libby_Events {
 		$this->loader->add_action( 'wp_ajax_nopriv_get_events_ajax', $plugin_public, 'get_events_ajax' );
 
 		/**
+		 * Register the AJAX actions for the front-end calendar
+		 */
+		$this->loader->add_action( 'wp_ajax_get_all_venues_ajax', $plugin_public, 'get_all_venues_ajax' );
+		$this->loader->add_action( 'wp_ajax_nopriv_get_all_venues_ajax', $plugin_public, 'get_all_venues_ajax' );
+
+		/**
 		 * Process requests to download an ical for a single event
 		 */
 		$this->loader->add_action( 'parse_request', $plugin_public, 'download_event_ical' );
@@ -262,6 +293,8 @@ class Libby_Events {
 		$this->loader->add_action( 'libby/events/form/calendar', $plugin_public, 'eo_fes_start_end_display' );
 		$this->loader->add_action( 'libby/events/form/venue_info', $plugin_public, 'eo_fes_venue_info_display' );
 		$this->loader->add_action( 'libby/events/form/setup_breakdown_time', $plugin_public, 'eo_fes_setup_breakdown_display' );
+
+		add_shortcode( 'libby_fullcalendar', array( 'Libby_Events_Shortcodes', 'handle_fullcalendar_shortcode_with_filter' ) );
 
 	}
 
