@@ -85,12 +85,15 @@ class Libby_Events_Public {
 	 */
 	public function enqueue_scripts() {
 
-		wp_register_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/libby-events-public.js', array( 'jquery', 'jquery-ui-datepicker', $this->plugin_name . '-fc', 'wp-util' ), $this->version, false );
+		wp_register_script( $this->plugin_name . '-booking-form', plugin_dir_url( __FILE__ ) . 'js/booking-form.js', array( 'jquery', 'jquery-ui-datepicker', $this->plugin_name . '-fc', 'wp-util' ), $this->version, false );
 		wp_register_script( $this->plugin_name . '-moment',  plugin_dir_url( dirname( __FILE__ ) ) . 'js/moment.min.js', array('jquery'), $this->version, true );
 		wp_register_script( $this->plugin_name . '-fc',  plugin_dir_url( dirname( __FILE__ ) ) . 'js/fullcalendar.min.js', array( $this->plugin_name . '-moment' ), $this->version, true );
+		wp_register_script( $this->plugin_name . '-calendar-filter', plugin_dir_url( __FILE__ ) . 'js/calendar-filter.js', array(), $this->version, true );
 		// wp_register_script( $this->plugin_name . '-fc-scheduler',  plugin_dir_url( dirname( __FILE__ ) ) . 'bower_components/fullcalendar-scheduler/dist/scheduler.min.js', array( $this->plugin_name . '-fc' ), $this->version, true );
 		// wp_localize_script( $this->plugin_name, 'fcResources', $this->get_scheduler_resource_array() );
-		wp_localize_script( $this->plugin_name , 'ajax_url', admin_url( 'admin-ajax.php' ) );
+		// Enable access to the ajax_url
+		wp_localize_script( $this->plugin_name . '-booking-form' , 'ajax_url', admin_url( 'admin-ajax.php' ) );
+		wp_localize_script( $this->plugin_name . '-calendar-filter' , 'ajax_url', admin_url( 'admin-ajax.php' ) );
 	}
 
 	function register_booking_form_shortcode_new() {
@@ -181,6 +184,26 @@ class Libby_Events_Public {
 	}
 
 	/**
+	 * Get all the venues via AJAX and return JSON.
+	 *
+	 * Used to retrieve a list of all venues to check against hierarchial venues
+	 *
+	 * @return json The encoded JSON or an error
+	 */
+	public function get_all_venues_ajax() {
+		$venues = get_terms(array(
+			'taxonomy' => 'event-venue',
+			'hide_empty' => false,
+		));
+		if ( ! is_wp_error( $venues ) ) {
+			wp_send_json_success( $venues );
+		}
+		else {
+			wp_send_json_error( $venues->get_error_message() );
+		}
+	}
+
+	/**
 	 * Get the hours for a particular day
 	 * @return json $venue_options
 	 */
@@ -245,7 +268,7 @@ class Libby_Events_Public {
 	public function eo_fes_start_end_display( $element ) {
 		wp_enqueue_script( $this->plugin_name . '-fc' );
 		wp_enqueue_style( $this->plugin_name . '-fc' );
-		wp_enqueue_script( $this->plugin_name );
+		wp_enqueue_script( $this->plugin_name . '-booking-form' );
 		wp_enqueue_style( $this->plugin_name );
 		include_once FORM_FIELD_TEMPLATE_DIR . 'booking-calendar.php';
 	}
