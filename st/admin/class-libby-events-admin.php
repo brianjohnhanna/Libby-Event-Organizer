@@ -311,4 +311,14 @@ class Libby_Events_Admin {
 		}
 	}
 
+	/**
+	 * Modify the custom post type registration args
+	 * @param  array $args The predefined arguments
+	 * @return array The modified arguments
+	 */
+	public function modify_event_cpt_args( $args ) {
+		$args['supports'][] = 'publicize';
+		return $args;
+	}
+
 }

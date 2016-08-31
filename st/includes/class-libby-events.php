@@ -201,6 +201,7 @@ class Libby_Events {
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'remove_menu_pages', 200 );
 		$this->loader->add_action( 'admin_head', $plugin_admin, 'filter_admin_notices' );
 		$this->loader->add_action( 'pending_to_publish', $plugin_admin, 'send_event_published_email' );
+		$this->loader->add_filter( 'eventorganiser_event_properties', $plugin_admin, 'modify_event_cpt_args' );
 
 		$venue_admin = new Libby_Events_Venue_Admin( $this->get_plugin_name(), $this->get_version() );
 		$this->loader->add_action( 'cmb2_admin_init', $venue_admin, 'register_custom_fields' );
