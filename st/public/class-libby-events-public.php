@@ -378,6 +378,15 @@ class Libby_Events_Public {
 			}
 		}
 
+		if ( ( is_array( $taxonomies ) && in_array( 'group-type', $taxonomies ) ) || ( !is_array( $taxonomies ) && $taxonomies == 'event-category' ) ) {
+			foreach ( $terms as $key => $term ){
+				$group_type_id = !is_object( $term ) ? $term : intval( $term->term_id );
+				if ( ! get_term_meta( $group_type_id, '_libby_public', true ) ){
+					unset( $terms[$key] );
+				}
+			}
+		}
+
 		return $terms;
 
 	}

@@ -3,29 +3,9 @@
 	var file_frame, image_data;
 
 	$(document).ready(function(){
-		$( ".libby-meta-container" ).sortable();
-		var $metaContainer = $('.libby-meta-container'),
-				$addButton = $('a.add-row'),
-				$removeButton = $('a.remove-row');
-
-		$addButton.on('click', function(e){
-			console.log('cicked');
-			var $container = $(this).closest('.libby-metabox').find('.libby-meta-container'),
-					$row = $container.find('.libby-row'),
-					$newRow = $row.eq(0).clone();
-
-			$newRow.find(':input').val('');
-			$container.append($newRow);
+		$('#venue_select').on('change', function(){
+			console.log('changed');
 		});
-
-		$removeButton.on('click', function(e){
-			var $container = $(this).closest('.libby-meta-container'),
-					$rows = $container.find('.libby-row');
-			if ($rows.length > 1) {
-				$(this).closest('.libby-row').remove();
-			}
-		});
-
 	});
 
 	$('.open-media').on('click', function(){
@@ -64,6 +44,10 @@
 		// Now display the actual file_frame
 		file_frame.open();
 	});
+	console.log('loaded');
+	// $('#venue_select').on('change', function(){
+	// 	console.log('changed');
+	// });
 
 	var $branchSelect = $('#branch');
 	$branchSelect.on('change', function(e){

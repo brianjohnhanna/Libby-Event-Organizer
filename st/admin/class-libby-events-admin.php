@@ -54,6 +54,10 @@ class Libby_Events_Admin {
 
 	}
 
+	public function enqueue_scripts() {
+		wp_enqueue_script( $this->plugin_name . '-events-admin', plugin_dir_url( __FILE__ ) . 'js/libby-events-admin.js', array( 'jquery' ), $this->version, true );
+	}
+
 	/**
 	 * Register the metaboxes for the venues
 	 *
@@ -102,7 +106,7 @@ class Libby_Events_Admin {
         'id'         => '_libby_setup_options',
         'type'       => 'radio',
 				'options_cb' => array( $this, 'get_venue_setup_options_array' ),
-				'show_on_cb' => array( $this, 'venue_has_setup_options' )
+				'before' => array( $this, 'setup_equipment_options_disclaimer' )
     ) );
 
 		// Setup Option
@@ -111,63 +115,86 @@ class Libby_Events_Admin {
         'id'         => '_libby_equipment',
         'type'       => 'multicheck',
 				'options_cb' => array( $this, 'get_venue_equipment_options_array' ),
-				'show_on_cb' => array( $this, 'venue_has_equipment' )
+				'before' => array( $this, 'setup_equipment_options_disclaimer' )
     ) );
 
-		$metabox->add_field(array(
-			'name'       => __( 'Setup Time Required', 'libby' ),
-			'id'         => '_libby_setup_time',
-			'type'       => 'text',
-			'show_on_cb' => array( $this, 'is_submitted_event' )
-		) );
-
-		$metabox->add_field( array(
-				'name'       => __( 'Meeting Purpose', 'libby' ),
-				'id'         => '_libby_meeting_purpose',
-				'type'       => 'textarea',
-				'attributes'  => array(
-					'readonly' => 'readonly',
-					'rows' => 4
-				),
-				'show_on_cb' => array( $this, 'is_submitted_event' )
-		) );
-
-		$metabox->add_field( array(
-				'name'       => __( 'Expected Attendance', 'libby' ),
-				'id'         => '_libby_expected_attendance',
+		$event_metabox_extra_fields = array(
+			'setup_time_required' => array(
+				'name'       => __( 'Setup Time Required', 'libby' ),
+				'id'         => '_libby_setup_time',
 				'type'       => 'text',
-				'show_on_cb' => array( $this, 'is_submitted_event' )
-		) );
-
-		// Regular text field
-    $metabox->add_field( array(
-        'name'       => __( 'Private Note', 'libby' ),
-        'id'         => '_libby_private_note',
-        'type'       => 'textarea',
-				'attributes'  => array(
-					'readonly' => 'readonly',
-					'rows' => 4
-				),
-				'show_on_cb' => array( $this, 'is_submitted_event' )
-    ) );
-
-		// Regular text field
-		$metabox->add_field( array(
-				'name'       => __( 'Event Link', 'libby' ),
-				'id'         => '_libby_link',
+				// 'show_on_cb' => array( $this, 'is_submitted_event' )
+			),
+			'breakdown_time_required' => array(
+				'name'       => __( 'Breakdown Time Required', 'libby' ),
+				'id'         => '_libby_breakdown_time',
 				'type'       => 'text',
-		) );
+				// 'show_on_cb' => array( $this, 'is_submitted_event' )
+			),
+			'meeting_purpose' => array(
+					'name'       => __( 'Meeting Purpose', 'libby' ),
+					'id'         => '_libby_meeting_purpose',
+					'type'       => 'textarea',
+					'attributes'  => array(
+						// 'readonly' => 'readonly',
+						'rows' => 4
+					),
+			),
+			'expected_attendance' => array(
+					'name'       => __( 'Expected Attendance', 'libby' ),
+					'id'         => '_libby_expected_attendance',
+					'type'       => 'text',
+					'show_on_cb' => array( $this, 'is_submitted_event' )
+			),
+			'private_note' => array(
+	        'name'       => __( 'Private Note', 'libby' ),
+	        'id'         => '_libby_private_note',
+	        'type'       => 'textarea',
+					'attributes'  => array(
+						'readonly' => 'readonly',
+						'rows' => 4
+					),
+					'show_on_cb' => array( $this, 'is_submitted_event' )
+	    ),
+			'event_link' => array(
+					'name'       => __( 'Event Link', 'libby' ),
+					'id'         => '_libby_link',
+					'type'       => 'text',
+			),
+			'fee' => array(
+					'name'       => __( 'Fee', 'libby' ),
+					'id'         => '_libby_fee',
+					'type'       => 'text',
+					'attributes'  => array(
+						'readonly' => 'readonly',
+					),
+					'show_on_cb' => array( $this, 'is_submitted_event' )
+			)
+		);
 
-		$metabox->add_field( array(
-				'name'       => __( 'Fee', 'libby' ),
-				'id'         => '_libby_fee',
-				'type'       => 'text',
-				'attributes'  => array(
-					'readonly' => 'readonly',
-				),
-				'show_on_cb' => array( $this, 'is_submitted_event' )
-		) );
+		/**
+		 * Apply filters to add/modify event extra fields. Returning false will not register any additional fields.
+		 * @var [type]
+		 */
+		$event_metabox_extra_fields = apply_filters( 'libby/events/event-meta-fields', $event_metabox_extra_fields );
 
+		if ( $event_metabox_extra_fields && is_array( $event_metabox_extra_fields) ) {
+			foreach ( $event_metabox_extra_fields as $key => $event_metabox_field ) {
+				$metabox->add_field( $event_metabox_field );
+			}
+		}
+
+	}
+
+	public function setup_equipment_options_disclaimer( $field_args, $field ) {
+		if ( ! $this->is_venue_set() ) {
+				printf( '%s options will appear here after selecting a venue and saving or publishing the event.', $field_args['name'] );
+		}
+		else if (
+			( $field_args['name'] === 'Equipment' && ! $this->venue_has_equipment() ) ||
+			( $field_args['name'] === 'Setup' && ! $this->venue_has_setup_options() ) ) {
+			printf( 'There are no %s options configured for the selected venue.', $field_args['name'] );
+		}
 	}
 
 	/**
@@ -187,6 +214,14 @@ class Libby_Events_Admin {
 		global $post;
 		$venue_id = eo_get_venue( $post->ID );
 		return eo_get_venue_meta( $venue_id, '_libby_setup_options', true ) ? true : false;
+	}
+
+	/**
+	 * Check if the venue has been set for the event
+	 */
+	public function is_venue_set() {
+		global $post;
+		return eo_get_venue( $post->ID ) ? true : false;
 	}
 
 	/**
@@ -234,7 +269,9 @@ class Libby_Events_Admin {
 	 * @return array $columns Registered columns
 	 */
 	public function register_custom_columns( $columns ) {
-		$columns['status'] = 'Status';
+		// $columns['status'] = 'Status';
+		unset($columns['taxonomy-event-venue']);
+		$columns = apply_filters( 'libby/events/event-columns', $columns );
 		return $columns;
 	}
 
@@ -247,11 +284,6 @@ class Libby_Events_Admin {
 		switch( $column ) {
 			case 'status' :
 				echo ucwords( get_post_status( $post_id ) );
-				break;
-			case 'venue' :
-				if ( eo_get_venue( $post_id ) && eo_get_venue_meta( $post_id, 'branch' ) ) {
-					echo eo_get_venue_meta( $post_id, 'branch', true );
-				}
 				break;
 		}
 	}

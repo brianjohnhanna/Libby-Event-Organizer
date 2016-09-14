@@ -323,7 +323,8 @@ function eventorganiser_admin_calendar() {
 		}
 
 		//Create query
-		$query_array = array_merge($presets, $request);	
+		$query_array = array_merge($presets, $request);
+		$query_array = apply_filters( 'libby/events/admin-calendar-query', $query_array );
 		$query = new WP_Query($query_array );
 
 		//Retrieve events		
