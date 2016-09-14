@@ -290,14 +290,13 @@
 				alert('The library is closed on ' + startObj.format('dddd, MMMM Do') + '. Please select a different date.');
 				return false;
 			}
-			var validStartHourObj = moment(dailyHours.open_time, 'hh:mm A').add(1, 'hours');
-			if(startObj.isBefore(startObj.clone().set('hour', validStartHourObj.format("HH")))) {
+			var validStartHourObj = moment(dailyHours.open_time, 'hh:mm A').add(30, 'minutes');
+			if(startObj.isBefore(startObj.clone().set({'hour': validStartHourObj.format("HH"), 'minute': validStartHourObj.format("mm")}))) {
 				alert('You have selected in invalid time. Bookings must start 1 hour after the library opens. \n\nThe library opens at ' + dailyHours.open_time + ' on ' + startObj.format('dddd, MMMM Do'));
 				return false;
 			}
-			var validEndHourObj = moment(dailyHours.close_time, 'hh:mm A').subtract(2, 'hours');
-			var endObjAdjusted = endObj.clone().subtract(1, 'minute');
-			if(endObjAdjusted.isAfter(endObj.clone().set('hour', validEndHourObj.format("HH")))) {
+			var validEndHourObj = moment(dailyHours.close_time, 'hh:mm A').subtract(30, 'minutes');
+			if(endObj.isAfter(endObj.clone().set({'hour': validEndHourObj.format("HH"), 'minute': validEndHourObj.format("mm")}))) {
 				alert('You have selected in invalid time. Bookings must end one hour before the library closes.\n\nThe library closes at ' + dailyHours.close_time + ' on ' + endObj.format('dddd, MMMM Do'));
 				return false;
 			}

@@ -70,7 +70,7 @@
 <ul id="miniCalEvents">
   <?php if ( isset( $todays_events ) && $todays_events ): ?>
     <?php foreach ( $todays_events as $event ) : ?>
-      <li><a href="<?php echo get_the_permalink( $event ) ; ?>"><?php echo get_the_title( $event ); ?></li>
+      <li><a href="<?php echo get_the_permalink( $event ) ; ?>"><?php echo get_the_title( $event ); ?></a></li>
     <?php endforeach; ?>
   <?php else: ?>
     No events for today.
