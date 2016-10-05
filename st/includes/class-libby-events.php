@@ -121,14 +121,6 @@ class Libby_Events {
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-libby-events-loader.php';
 
 		/**
-		 * The class responsible for making our 1-to-1 meta boxes
-		 *
-		 * @author WebDevStudios
-		 * @link https://github.com/WebDevStudios/Taxonomy_Single_Term
-		 */
-		// require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class.taxonomy-single-term.php';
-
-		/**
 		 * Register all custom post types and taxonomies
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/taxonomy/group-type.php';
@@ -228,13 +220,6 @@ class Libby_Events {
 		$settings_page = new Libby_Events_Settings_Page();
 		$this->loader->add_filter( 'eventorganiser_options', $settings_page, 'set_default_options' );
 
-		// Configure group type taxonomy metabox to have singluar option
-		// $group_type_meta_box = new Taxonomy_Single_Term( 'group_type', array( 'event' ), 'select' );
-		// $group_type_meta_box->set( 'priority', 'core' );
-		// $group_type_meta_box->set( 'metabox_title', __( 'Set Group Type', 'libby' ) );
-		// $group_type_meta_box->set( 'force_selection', true );
-
-
 	}
 
 	/**
@@ -275,7 +260,7 @@ class Libby_Events {
 		$this->loader->add_action( 'wp_ajax_nopriv_get_events_ajax', $plugin_public, 'get_events_ajax' );
 
 		/**
-		 * Register the AJAX actions for the front-end calendar
+		 * Register the AJAX actions for the booking venue selection
 		 */
 		$this->loader->add_action( 'wp_ajax_get_all_venues_ajax', $plugin_public, 'get_all_venues_ajax' );
 		$this->loader->add_action( 'wp_ajax_nopriv_get_all_venues_ajax', $plugin_public, 'get_all_venues_ajax' );
