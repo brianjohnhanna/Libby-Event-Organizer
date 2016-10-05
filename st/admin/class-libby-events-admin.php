@@ -314,12 +314,14 @@ class Libby_Events_Admin {
 			$post->post_title,
 			get_the_permalink( $post )
 		);
+		$booking_form_from_email = apply_filters( 'libby/events/form/admin-email', get_option( 'admin_email' ) );
 		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
-			sprintf( 'From: %s <%s>', get_bloginfo( 'name' ), get_option( 'admin_email' ) )
+			sprintf( 'From: %s <%s>', get_bloginfo( 'name' ),  $booking_form_from_email )
 		);
 
 		wp_mail( $to, $subject, $body, $headers );
+
 	}
 
 	/**
@@ -350,6 +352,7 @@ class Libby_Events_Admin {
 	 */
 	public function modify_event_cpt_args( $args ) {
 		$args['supports'][] = 'publicize';
+		$args['taxonomies'][] = 'group-type';
 		return $args;
 	}
 

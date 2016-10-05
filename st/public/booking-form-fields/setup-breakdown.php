@@ -8,7 +8,7 @@
 </select>
 <br /><br />
 <label for="breakdownTime">Breakdown Time Required</label>
-<select name="libby[_libby_setup_time]" id="breakdownTime">
+<select name="libby[_libby_breakdown_time]" id="breakdownTime">
   <option>None</option>
   <option value="15">15 Minutes</option>
   <option value="30">30 Minutes</option>

@@ -226,9 +226,7 @@ class Libby_Events {
 		$this->loader->add_action( 'cmb2_admin_init', $group_type_admin, 'register_custom_fields' );
 
 		$settings_page = new Libby_Events_Settings_Page();
-		$this->loader->add_action( 'admin_menu', $settings_page, 'rename_settings_page' );
 		$this->loader->add_filter( 'eventorganiser_options', $settings_page, 'set_default_options' );
-		$this->loader->add_filter( 'eventorganiser_settings_tabs', $settings_page, 'add_settings_tabs' );
 
 		// Configure group type taxonomy metabox to have singluar option
 		// $group_type_meta_box = new Taxonomy_Single_Term( 'group_type', array( 'event' ), 'select' );
