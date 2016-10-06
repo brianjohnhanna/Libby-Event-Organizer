@@ -379,16 +379,21 @@ class Libby_Events_Admin {
 	 * @return boolean Whether there is a confilcting event
 	 */
 	public function check_event_conflicts( $event_ID ) {
-		// Set a class var so we don't call this function twice.
+		global $wpdb;
+
+		// Set a class var so we don't call this function twice, since it's attached to multiple hooks.
 		if ( $this->event_conflicts_checked ) {
 			return;
 		}
 		$this->event_conflicts_checked = true;
 
-		global $wpdb;
+		// If the event is all day, let's bail... Probably not looking for those kinds of conflicts.
+		if ( eo_is_all_day( $event_ID ) ) {
+			return false;
+		}
 
+		// If we don't have a venue, there's really nothing to check here...If so we'll store the venue ID for check in SQL
 		$venue = eo_get_venue( $event_ID );
-		// If we don't have a venue, there's really nothing to check here...
 		if ( ! $venue ) {
 			return false;
 		}
@@ -396,25 +401,28 @@ class Libby_Events_Admin {
 		// Get the schedule for the event
 		$schedule = eo_get_event_schedule( $event_ID );
 
-		// Get all the recurrence dates to check against
+		// Get all the occurrence dates to check against
 		$upcoming = $wpdb->get_results($wpdb->prepare(
 			"SELECT StartDate, EndDate from {$wpdb->prefix}eo_events
 				WHERE post_id = %d",
 			$event_ID
 		));
 
+		// Map the start and end dates out of the sql results into respective arrays for the prepare method
 		$start_dates = array_map(function($occurrence){
 			return $occurrence->StartDate;
 		}, $upcoming);
-
 		$end_dates = array_map(function($occurrence){
 			return $occurrence->EndDate;
 		}, $upcoming);
 
-		$in_clause_placeholders = array_fill( 0, count($start_dates), '%s' );
+		// We have to create placeholders for the start/end dates so we can use them with the $wpdb->prepare method
+		// i.e. %s, %s, %s...
+		$in_clause_placeholders = array_fill( 0, count( $upcoming ), '%s' );
 		$in_clause_format = implode( ', ', $in_clause_placeholders );
 
-		// Create the prepare array, since it's variable. Probably a more elegant way to do this.
+		// Create the prepare array, since we'll pass it as variable instead of sprintf type.
+		// @TODO Probably a more elegant way to do this.
 		$prepare = $end_dates;
 		$prepare[] = $schedule['start']->format( 'H:i:s' );
 		$prepare[] = $schedule['end']->format( 'H:i:s' );
@@ -424,9 +432,7 @@ class Libby_Events_Admin {
 		$prepare[] = $venue;
 		$prepare[] = $event_ID;
 
-		// First we check if the end date is the same as the start date of our event, and whether there are any events
-		// that end after our event starts. Then we check if there are any events whos start date is the same as our end date,
-		// and whether it starts before our event is supposed to end
+		// Run the query to look for conflicts
 		$conflicts = $wpdb->get_results( $wpdb->prepare(
 			"SELECT * from {$wpdb->prefix}eo_events
 				LEFT JOIN $wpdb->term_relationships ON ( post_id = $wpdb->term_relationships.object_id )
@@ -439,29 +445,16 @@ class Libby_Events_Admin {
 			$prepare
 		) );
 
-		// $conflicts = $wpdb->get_results( $wpdb->prepare(
-		// 	"SELECT * from {$wpdb->prefix}eo_events
-		// 		LEFT JOIN $wpdb->term_relationships ON ( post_id = $wpdb->term_relationships.object_id )
-		// 		LEFT JOIN $wpdb->term_taxonomy ON ( $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id )
-		// 		WHERE  ( ( EndDate = %s AND FinishTime > %s )
-		// 		OR ( StartDate = %s AND StartTime < %s ) )
-		// 		AND taxonomy = 'event-venue'
-		// 		AND term_id = %d
-		// 		AND post_id <> %d",
-		// 	$schedule['start']->format( 'Y-m-d' ),
-		// 	$schedule['end']->format( 'H:i:s' ),
-		// 	$schedule['end']->format( 'Y-m-d' ),
-		// 	$schedule['start']->format( 'H:i:s' ),
-		// 	$venue,
-		// 	$event_ID
-		// ) );
-
 		if ( ! $conflicts ) {
 			return false;
 		}
 
 		$conflicts_html = array();
 		foreach ( $conflicts as $conflict ) {
+			// If the event conflict is an all day event, it's probably not the kind of conflict we're looking for.
+			if ( eo_is_all_day( $conflict->post_id ) ) {
+				continue;
+			}
 			$conflicts_html[] = sprintf(
 				'<li><a href="%s">%s</a> starts at %s and ends at %s on %s in %s.</li>',
 				get_edit_post_link( $conflict->post_id ),
@@ -473,14 +466,14 @@ class Libby_Events_Admin {
 			);
 		}
 
-		// If we've looped through all the conflicts and they are at different venues, we'll bail
+		// If we've looped through all the conflicts and have nothing in the array, we'll bail.
 		if ( empty( $conflicts_html ) ) {
 			return false;
 		}
-
+		// Build the HTML to add to the message handler.
 		$message_html = '<ul>' . implode( $conflicts_html ) . '</ul>';
 
-		$this->messenger->add_message( 'You have a conflict with the following events: <br /><br />' . $message_html );
+		$this->messenger->add_message( 'You have a conflict with the following event(s): <br /><br />' . $message_html );
 
 		return true;
 
@@ -493,6 +486,10 @@ class Libby_Events_Admin {
 	protected function prevent_publish( $event_id ) {
 		// Remove the save_post hook so we don't end up in an infinite loop
 		remove_action( 'save_post', 'eventorganiser_details_save' );
+
+		// Update the post to a draft
+		// @TODO probably need to check and see if it was pending already so the proper people get notified
+		// if the date of their event is moved
 		wp_update_post( array( 'ID' => $event_id, 'post_status' => 'draft' ) );
 
 		// Change the message to drafted instead of published.
