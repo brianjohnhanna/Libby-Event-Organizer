@@ -279,7 +279,6 @@ class Libby_Events_Public {
 	 * @see vendor/event-organizer-fes/includes/actions.php
 	 */
 	public function eo_fes_process_form_submission( $form ) {
-		// wp_die(var_dump($_POST));
 		if ( isset( $_POST['libby'] ) ) {
 			$this->post_vars = $_POST['libby'];
 		}
@@ -336,6 +335,7 @@ class Libby_Events_Public {
 			return $terms;
 		}
 
+		// Filter out the event venues to only show those that are meeting rooms and that are not staff only
 		if( ( is_array( $taxonomies ) && in_array( 'event-venue', $taxonomies ) ) || ( !is_array( $taxonomies ) && $taxonomies == 'event-venue' ) ){
 			foreach ( $terms as $key => $term ){
 				$venue_id = !is_object( $term ) ? $term : intval( $term->term_id );
@@ -348,6 +348,7 @@ class Libby_Events_Public {
 			}
 		}
 
+		// Filter out event categories that are not public
 		if ( ( is_array( $taxonomies ) && in_array( 'event-category', $taxonomies ) ) || ( !is_array( $taxonomies ) && $taxonomies == 'event-category' ) ) {
 			foreach ( $terms as $key => $term ){
 				$cat_id = !is_object( $term ) ? $term : intval( $term->term_id );
@@ -357,6 +358,7 @@ class Libby_Events_Public {
 			}
 		}
 
+		// Filter out event group types that are not public
 		if ( ( is_array( $taxonomies ) && in_array( 'group-type', $taxonomies ) ) || ( !is_array( $taxonomies ) && $taxonomies == 'event-category' ) ) {
 			foreach ( $terms as $key => $term ){
 				$group_type_id = !is_object( $term ) ? $term : intval( $term->term_id );
