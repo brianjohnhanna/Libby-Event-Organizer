@@ -41,6 +41,12 @@ class Libby_Events_Admin {
 	private $version;
 
 	/**
+	 * Keep track of whether we have checked event conflicts
+	 * @var bool 	$event_conflicts_checked  Whether we've checked for event conflicts for the current event
+	 */
+	protected $event_conflicts_checked;
+
+	/**
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    1.0.0
@@ -376,13 +382,13 @@ class Libby_Events_Admin {
 
 	/**
 	 * Check to see if the event if double booked based on the post meta
-	 * @return boolean Whether there is a confilcting event
+	 * @return boolean Whether there is/are conflicting event(s)
 	 */
 	public function check_event_conflicts( $event_ID ) {
 		global $wpdb;
 
 		// Set a class var so we don't call this function twice, since it's attached to multiple hooks.
-		if ( $this->event_conflicts_checked ) {
+		if ( $this->event_conflicts_checked === true ) {
 			return;
 		}
 		$this->event_conflicts_checked = true;
@@ -423,22 +429,42 @@ class Libby_Events_Admin {
 
 		// Create the prepare array, since we'll pass it as variable instead of sprintf type.
 		// @TODO Probably a more elegant way to do this.
+
 		$prepare = $end_dates;
-		$prepare[] = $schedule['start']->format( 'H:i:s' );
-		$prepare[] = $schedule['end']->format( 'H:i:s' );
+		$prepare[] = $schedule['start']->modify('+1 second')->format( 'H:i:s' );
+		$prepare[] = $schedule['end']->modify('+1 second')->format( 'H:i:s' );
 		$prepare = array_merge( $prepare, $start_dates );
+		$prepare[] = $schedule['start']->modify('-2 second')->format( 'H:i:s' );
+		$prepare[] = $schedule['end']->modify('-2 second')->format( 'H:i:s' );
+		$prepare = array_merge( $prepare, $start_dates );
+		$prepare = array_merge( $prepare, $end_dates );
+		$prepare[] = $schedule['start']->modify('+1 second')->format( 'H:i:s' );
+		$prepare[] = $schedule['end']->modify('+1 second')->format( 'H:i:s' );
 		$prepare[] = $schedule['start']->format( 'H:i:s' );
 		$prepare[] = $schedule['end']->format( 'H:i:s' );
 		$prepare[] = $venue;
 		$prepare[] = $event_ID;
 
 		// Run the query to look for conflicts
+		// First WHERE checks to see if any events end date/time is during our event
+		// Second WHERE checks to see if any events start date/time is during our event
+		// Last WHERE checks to see if the any events with the same start and end date either start/end during our event or before/after it
 		$conflicts = $wpdb->get_results( $wpdb->prepare(
 			"SELECT * from {$wpdb->prefix}eo_events
 				LEFT JOIN $wpdb->term_relationships ON ( post_id = $wpdb->term_relationships.object_id )
 				LEFT JOIN $wpdb->term_taxonomy ON ( $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id )
-				WHERE  ( ( EndDate IN ({$in_clause_format}) AND ( FinishTime BETWEEN %s AND %s ) )
-				OR ( StartDate IN ({$in_clause_format}) AND ( StartTime BETWEEN %s AND %s ) ) )
+				WHERE  (
+					( EndDate IN ({$in_clause_format}) AND ( FinishTime BETWEEN %s AND %s ) )
+				OR
+					( StartDate IN ({$in_clause_format}) AND ( StartTime BETWEEN %s AND %s ) )
+				OR
+					( StartDate IN ({$in_clause_format}) AND EndDate IN ({$in_clause_format})
+					AND (
+						( StartTime < %s AND FinishTime > %s )
+						OR
+						( StartTime > %s AND FinishTime < %s ) )
+					)
+				)
 				AND taxonomy = 'event-venue'
 				AND term_id = %d
 				AND post_id <> %d",
