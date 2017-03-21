@@ -328,7 +328,8 @@ class Libby_Events_Admin {
 		$booking_form_from_email = apply_filters( 'libby/events/form/admin-email', get_option( 'admin_email' ) );
 		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
-			sprintf( 'From: %s <%s>', get_bloginfo( 'name' ),  $booking_form_from_email )
+			sprintf( 'From: %s <%s>', get_bloginfo( 'name' ),  $booking_form_from_email ),
+			sprintf( 'Reply-To: %s <%s>', get_bloginfo( 'name' ),  $booking_form_from_email )
 		);
 
 		wp_mail( $to, $subject, $body, $headers );

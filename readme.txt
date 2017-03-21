@@ -51,3 +51,8 @@ Libby Event Organizer provides the following shortcodes:
 * `[eo_fullcalendar]`  - displays a calendar, similiar to the admin calendar, with optional month, week and day views and category and venue filters.
 * `[eo_venue_map]` - displays a Google map of the current venue, or of a particular venue given as an attribute.
 * `[eo_subscribe]` - wraps the content in a link which allows visitors to subscribe to your events; there are two types: 'Google' and 'Webcal'.
+
+== Upgrade Notice ==
+
+= 3.1.5 =
+This version adds a conflict check to event scheduling.

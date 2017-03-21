@@ -211,6 +211,7 @@ class Libby_Events_Public {
 			$start = eo_get_the_start( DATETIMEOBJ, $event->ID, null, $event->occurrence_id);
 			$end = eo_get_the_end( DATETIMEOBJ, $event->ID, null, $event->occurrence_id );
 			$setup_time = get_post_meta( $event->ID, '_libby_setup_time', true );
+			$breakdown_time = get_post_meta( $event->ID, '_libby_breakdown_time', true );
 			if ( $setup_time ) {
 				$start->modify( '-' . $setup_time . ' mins' );
 			}

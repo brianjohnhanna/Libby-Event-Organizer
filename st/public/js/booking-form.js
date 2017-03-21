@@ -160,10 +160,10 @@
 			this.initDatePicker();
 			this.bindUIActions();
 		},
-		initCalendar() {
+		initCalendar: function() {
 			calendar = el.calendar.fullCalendar(this.calendarArgs);
 		},
-		initDatePicker() {
+		initDatePicker: function() {
 			el.eventDate.datepicker({
 				minDate: s.minDate.toDate(),
 				maxDate: s.maxDate.toDate(),
@@ -353,7 +353,7 @@
 				};
 
 				// Hack for Sundays not having enough time between min/max to allow selection
-				if ( currentCalDate.format('d') === '0' ) {
+				if ( dayStartObj.diff(dayEndObj, 'hours') < 4 ) {
 					options.minTime = '10:00';
 					options.maxTime = '17:00';
 				}
