@@ -4,7 +4,9 @@ echo "BEGIN:VCALENDAR\r\n";
 echo "VERSION:2.0\r\n";
 echo 'PRODID:-//' . get_bloginfo( 'name' ) . "//NONSGML Events//EN\r\n";
 echo "CALSCALE:GREGORIAN\r\n";
-echo 'X-WR-CALNAME:' . get_bloginfo( 'name' ) . " - Events\r\n";
+if( !is_single() ){
+	echo 'X-WR-CALNAME:' . get_bloginfo( 'name' ) . " - Events\r\n";
+}
 echo 'X-ORIGINAL-URL:' . get_post_type_archive_link( 'event' ) . "\r\n";
 echo 'X-WR-CALDESC:' . get_bloginfo( 'name' ) . " - Events\r\n";
 
@@ -63,8 +65,8 @@ if ( have_posts() ) :
 			echo 'DTEND;VALUE=DATE:' . $end->format( 'Ymd' ) . "\r\n";
 		} elseif ( $timezone ) {
 			//Non-all-day event with timezone
-			echo 'DTSTART;TZID=' . eo_get_blog_timezone()->getName().':' . $start->format( 'Ymd\THis' ) . "\r\n";
-			echo 'DTEND;TZID=' . eo_get_blog_timezone()->getName().':' . $end->format( 'Ymd\THis' ) . "\r\n";
+			echo 'DTSTART;TZID=' . eo_get_blog_timezone()->getName() . ':' . $start->format( 'Ymd\THis' ) . "\r\n";
+			echo 'DTEND;TZID=' . eo_get_blog_timezone()->getName() . ':' . $end->format( 'Ymd\THis' ) . "\r\n";
 		} else {
 			//Non-all-day event without timezone or with GMT offset
 			$start->setTimezone( $utc_timezone );
@@ -118,12 +120,11 @@ if ( have_posts() ) :
 		) . "\r\n";
 
 		$description = wp_strip_all_tags( html_entity_decode( get_the_excerpt(), ENT_COMPAT, 'UTF-8' ) );
-		$description = ent2ncr( convert_chars( $description ) );
 		/**
-	 	* Filters the description of the event as it appears in the iCal feed.
-	 	*
-	 	* @param string $description The event description
-	 	*/
+		 * Filters the description of the event as it appears in the iCal feed.
+		 *
+		 * @param string $description The event description
+		 */
 		$description = apply_filters( 'eventorganiser_ical_description', $description );
 		$description = eventorganiser_escape_ical_text( $description );
 
@@ -135,7 +136,7 @@ if ( have_posts() ) :
 		$description = str_replace( "\r\n", '', $description ); //Remove new lines
 		$description = str_replace( "\n", '', $description );
 		$description = eventorganiser_escape_ical_text( $description );
-		echo eventorganiser_fold_ical_text( "X-ALT-DESC;FMTTYPE=text/html: $description" ). "\r\n";
+		echo eventorganiser_fold_ical_text( "X-ALT-DESC;FMTTYPE=text/html: $description" ) . "\r\n";
 
 		$cats = get_the_terms( get_the_ID(), 'event-category' );
 		if ( $cats && ! is_wp_error( $cats ) ) :

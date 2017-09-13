@@ -3,7 +3,7 @@
 **Donate link:** http://www.wp-event-organiser.com/donate  
 **Tags:** events, event, event categories, event organizer, events calendar, event management, ical, locations, google map, widget, venues, maps, gigs, shows,  
 **Requires at least:** 3.8.0  
-**Tested up to:** 4.6.1  
+**Tested up to:** 4.8.1  
 **Stable tag:** {{version}}  
 **License:** GPLv3  
 
@@ -237,6 +237,53 @@ More information on shortcodes is [available here](http://wp-event-organiser.com
 
 
 ## Changelog ##
+
+### 3.3.0 12th September 2017
+
+* added: `%event_range{date-format}{time-format}%` placeholder for the event list shortcode / widget
+* added: `%event_organiser%` placeholder for the event list shortcode / widget
+* added: `eventorganiser_google_maps_url` hook
+* updated: Spanish, Finish and Italian translations
+* bugfix: private events authored by the current user are now visible in the admin calendar
+* bugfix: Fix casing in 'All events'
+* bugfix: Fix bug in event list widget settings: `group_occurrences` checkbox is not checked, even when enabled.
+
+###
+### 3.2.0 23rd August 2017
+* Updated 'Tested up to' version (WordPress 4.8.1)
+* Update Czech, Indonesian, French, Japanese, Dutch, Portuguese, 
+  Norwegian, Slovenian and Swedish.
+* Default event page names are now filterable via `eventorganiser_event_properties`.
+* Remove X-WR-CALNAME from iCal feed for single event feeds. See [#413](https://github.com/stephenharris/Event-Organiser/issues/413).
+* Fixes errors if event-category tax is disabled. See [#414](https://github.com/stephenharris/Event-Organiser/issues/414)
+* Fixes mark-up error in calendar widget: tbody must occur before tfoot
+###
+### 3.1.10 - 8th July 2017
+* Updated 'Tested up to' version (WordPress 4.8)
+* Updated Afrikaan, Catalan, Croatian, Czech, Dutch, French, German, Greek,
+  Hungarian, Portuguese, Russian, Slovenian, Spanish and Turkish translations.
+###
+### 3.1.9 - 31st March 2017
+* Removed development tool
+* Updated French, Italian and Japanese translations
+###
+### 3.1.8 - 30th March 2017
+
+* Handle 767 byte index size limit in MySQL. See [#404](https://github.com/stephenharris/Event-Organiser/issues/404)
+* Fix handling of ampersands in the iCal feed
+###
+### 3.1.7 - 23rd December 2016
+* bugfix: Remove icon was not visible when editing galleries on the event admin page
+###
+### 3.1.6 - 11th November 2016
+ * Fix bug causing edit event admin page to link to the settings page.
+ * Fix bug in `eo_get_current_occurrence_of()`
+ * Ensure `occurrence_id` value returned by `eo_get_next_occurrence_of()` is an integer not a string.
+###
+### 3.1.5 - 2nd November 2016 ###
+* bugfix: Fixed conflict, affecting widget the calendar, with some tranlsation plugins. This resulted in not being able to naviage through the calendar.
+* bugfix: Fixed inline documentation
+* bugfix: Fixed `<br>` tag being used as a closing tag
 
 ### 3.1.4 - 9th September 2016 ###
 * Tested up to 4.6.1
