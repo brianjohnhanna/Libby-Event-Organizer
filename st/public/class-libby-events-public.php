@@ -89,35 +89,10 @@ class Libby_Events_Public {
 		wp_register_script( $this->plugin_name . '-moment',  plugin_dir_url( dirname( __FILE__ ) ) . 'js/moment.min.js', array('jquery'), $this->version, true );
 		wp_register_script( $this->plugin_name . '-fc',  plugin_dir_url( dirname( __FILE__ ) ) . 'js/fullcalendar.min.js', array( $this->plugin_name . '-moment' ), $this->version, true );
 		wp_register_script( $this->plugin_name . '-calendar-filter', plugin_dir_url( __FILE__ ) . 'js/calendar-filter.js', array(), $this->version, true );
-		// wp_register_script( $this->plugin_name . '-fc-scheduler',  plugin_dir_url( dirname( __FILE__ ) ) . 'bower_components/fullcalendar-scheduler/dist/scheduler.min.js', array( $this->plugin_name . '-fc' ), $this->version, true );
-		// wp_localize_script( $this->plugin_name, 'fcResources', $this->get_scheduler_resource_array() );
+
 		// Enable access to the ajax_url
 		wp_localize_script( $this->plugin_name . '-booking-form' , 'ajax_url', admin_url( 'admin-ajax.php' ) );
 		wp_localize_script( $this->plugin_name . '-calendar-filter' , 'ajax_url', admin_url( 'admin-ajax.php' ) );
-	}
-
-	function register_booking_form_shortcode_new() {
-
-		wp_enqueue_script( $this->plugin_name . '-fc-scheduler' );
-		wp_enqueue_style( $this->plugin_name . '-fc-scheduler' );
-		// wp_enqueue_script( $this->plugin_name . '-fes' );
-		// wp_enqueue_script( 'eo_front' );
-		// wp_enqueue_style( 'eo_front' );
-		wp_enqueue_script( $this->plugin_name );
-		wp_enqueue_style( $this->plugin_name );
-
-		$venues = eo_get_venues();
-		$categories = get_terms( array(
-			'taxonomy' => 'event-category',
-			'hide_empty' => false,
-			'hierarchical' => false
-		) );
-		$group_types = get_terms( array(
-			'taxonomy' => 'group_type',
-			'hide_empty' => false,
-			'hierarchical' => false
-		) );
-		require_once plugin_dir_path( __FILE__ ) . '/shortcodes/booking-form.php';
 	}
 
 	function register_calendar_with_list_shortcode() {
@@ -234,15 +209,20 @@ class Libby_Events_Public {
 		$events = array();
 		foreach ( $eo_events as $key => $event ){
 			$start = eo_get_the_start( DATETIMEOBJ, $event->ID, null, $event->occurrence_id);
+			$end = eo_get_the_end( DATETIMEOBJ, $event->ID, null, $event->occurrence_id );
 			$setup_time = get_post_meta( $event->ID, '_libby_setup_time', true );
+			$breakdown_time = get_post_meta( $event->ID, '_libby_breakdown_time', true );
 			if ( $setup_time ) {
 				$start->modify( '-' . $setup_time . ' mins' );
+			}
+			if ( $breakdown_time ) {
+				$end->modify( '+' . $breakdown_time . ' mins' );
 			}
 			$events[$key] = array(
 				'id' => $event->ID,
 				'title' => $event->post_title,
 				'start' => $start->format( 'Y-m-d H:i:s' ),
-				'end' => eo_get_the_end( 'Y-m-d H:i:s', $event->ID, null, $event->occurrence_id ),
+				'end' => $end->format( 'Y-m-d H:i:s' )
 			);
 			// We set pending events to render in the background...
 			if ( $event->post_status === 'pending' ) {
@@ -300,7 +280,6 @@ class Libby_Events_Public {
 	 * @see vendor/event-organizer-fes/includes/actions.php
 	 */
 	public function eo_fes_process_form_submission( $form ) {
-		// wp_die(var_dump($_POST));
 		if ( isset( $_POST['libby'] ) ) {
 			$this->post_vars = $_POST['libby'];
 		}
@@ -357,6 +336,7 @@ class Libby_Events_Public {
 			return $terms;
 		}
 
+		// Filter out the event venues to only show those that are meeting rooms and that are not staff only
 		if( ( is_array( $taxonomies ) && in_array( 'event-venue', $taxonomies ) ) || ( !is_array( $taxonomies ) && $taxonomies == 'event-venue' ) ){
 			foreach ( $terms as $key => $term ){
 				$venue_id = !is_object( $term ) ? $term : intval( $term->term_id );
@@ -369,6 +349,7 @@ class Libby_Events_Public {
 			}
 		}
 
+		// Filter out event categories that are not public
 		if ( ( is_array( $taxonomies ) && in_array( 'event-category', $taxonomies ) ) || ( !is_array( $taxonomies ) && $taxonomies == 'event-category' ) ) {
 			foreach ( $terms as $key => $term ){
 				$cat_id = !is_object( $term ) ? $term : intval( $term->term_id );
@@ -378,6 +359,7 @@ class Libby_Events_Public {
 			}
 		}
 
+		// Filter out event group types that are not public
 		if ( ( is_array( $taxonomies ) && in_array( 'group-type', $taxonomies ) ) || ( !is_array( $taxonomies ) && $taxonomies == 'event-category' ) ) {
 			foreach ( $terms as $key => $term ){
 				$group_type_id = !is_object( $term ) ? $term : intval( $term->term_id );

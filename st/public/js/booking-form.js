@@ -117,6 +117,11 @@
 				var title = el.eventTitle.val();
 				if (!title) {
 					title = prompt('Please enter a title for your event.');
+					if ( !title ) {
+						$('#calendar').fullCalendar('unselect');
+						alert( 'You must enter a title, please try again' );
+						return false;
+					}
 					el.eventTitle.val(title);
 				}
 				eventData.title = title;
@@ -155,10 +160,10 @@
 			this.initDatePicker();
 			this.bindUIActions();
 		},
-		initCalendar() {
+		initCalendar: function() {
 			calendar = el.calendar.fullCalendar(this.calendarArgs);
 		},
-		initDatePicker() {
+		initDatePicker: function() {
 			el.eventDate.datepicker({
 				minDate: s.minDate.toDate(),
 				maxDate: s.maxDate.toDate(),
@@ -346,6 +351,12 @@
 					end: dayEndObj.clone().subtract(1, 'hour').format('HH:mm'),
 					dow: [currentCalDate.format('d')] // Otherwise set it so there the day of week is the current date, hours take care of the rest
 				};
+
+				// Hack for Sundays not having enough time between min/max to allow selection
+				if ( dayStartObj.diff(dayEndObj, 'hours') < 4 ) {
+					options.minTime = '10:00';
+					options.maxTime = '17:00';
+				}
 			}
 			var calendarArgs = $.extend(this.calendarArgs, options);
 			calendar.fullCalendar('destroy');

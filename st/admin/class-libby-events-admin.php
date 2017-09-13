@@ -41,16 +41,23 @@ class Libby_Events_Admin {
 	private $version;
 
 	/**
+	 * Keep track of whether we have checked event conflicts
+	 * @var bool 	$event_conflicts_checked  Whether we've checked for event conflicts for the current event
+	 */
+	protected $event_conflicts_checked;
+
+	/**
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    1.0.0
 	 * @param      string    $plugin_name       The name of this plugin.
 	 * @param      string    $version    The version of this plugin.
 	 */
-	public function __construct( $plugin_name, $version ) {
+	public function __construct( $plugin_name, $version, $messenger ) {
 
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
+		$this->messenger = $messenger;
 
 	}
 
@@ -243,8 +250,10 @@ class Libby_Events_Admin {
 		$venue_id = eo_get_venue( $post->ID );
 		$venue_setup_options = eo_get_venue_meta( $venue_id, '_libby_setup_options', true );
 		$rtn = [];
-		foreach ( $venue_setup_options as $option ) {
-			$rtn[$option['title']] = $option['title'];
+		if ( $venue_setup_options ) {
+			foreach ( $venue_setup_options as $option ) {
+				$rtn[$option['title']] = $option['title'];
+			}
 		}
 		return $rtn;
 	}
@@ -258,8 +267,10 @@ class Libby_Events_Admin {
 		$venue_id = eo_get_venue( $post->ID );
 		$venue_equipment = eo_get_venue_meta( $venue_id, '_libby_available_equipment', true );
 		$rtn = [];
-		foreach ( $venue_equipment as $equipment ) {
-			$rtn[$equipment['title']] = $equipment['title'];
+		if ( $venue_equipment ) {
+			foreach ( $venue_equipment as $equipment ) {
+				$rtn[$equipment['title']] = $equipment['title'];
+			}
 		}
 		return $rtn;
 	}
@@ -317,7 +328,8 @@ class Libby_Events_Admin {
 		$booking_form_from_email = apply_filters( 'libby/events/form/admin-email', get_option( 'admin_email' ) );
 		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
-			sprintf( 'From: %s <%s>', get_bloginfo( 'name' ),  $booking_form_from_email )
+			sprintf( 'From: %s <%s>', get_bloginfo( 'name' ),  $booking_form_from_email ),
+			sprintf( 'Reply-To: %s <%s>', get_bloginfo( 'name' ),  $booking_form_from_email )
 		);
 
 		wp_mail( $to, $subject, $body, $headers );
@@ -354,6 +366,166 @@ class Libby_Events_Admin {
 		$args['supports'][] = 'publicize';
 		$args['taxonomies'][] = 'group-type';
 		return $args;
+	}
+
+	/**
+	 * Validate the event before publishing
+	 */
+	public function validate_event( $event_ID ) {
+		$prevent_publish = false;
+		// @TODO need to include logic here to check license key, prevent publish if so
+
+		$prevent_publish = $this->check_event_conflicts( $event_ID );
+		if ( $prevent_publish ) {
+			$this->prevent_publish( $event_ID );
+		}
+	}
+
+	/**
+	 * Check to see if the event if double booked based on the post meta
+	 * @return boolean Whether there is/are conflicting event(s)
+	 */
+	public function check_event_conflicts( $event_ID ) {
+		global $wpdb;
+
+		// Set a class var so we don't call this function twice, since it's attached to multiple hooks.
+		if ( $this->event_conflicts_checked === true ) {
+			return;
+		}
+		$this->event_conflicts_checked = true;
+
+		// If the event is all day, let's bail... Probably not looking for those kinds of conflicts.
+		if ( eo_is_all_day( $event_ID ) ) {
+			return false;
+		}
+
+		// If we don't have a venue, there's really nothing to check here...If so we'll store the venue ID for check in SQL
+		$venue = eo_get_venue( $event_ID );
+		if ( ! $venue ) {
+			return false;
+		}
+
+		// Get the schedule for the event
+		$schedule = eo_get_event_schedule( $event_ID );
+
+		// Get all the occurrence dates to check against
+		$upcoming = $wpdb->get_results($wpdb->prepare(
+			"SELECT StartDate, EndDate from {$wpdb->prefix}eo_events
+				WHERE post_id = %d",
+			$event_ID
+		));
+
+		// Map the start and end dates out of the sql results into respective arrays for the prepare method
+		$start_dates = array_map(function($occurrence){
+			return $occurrence->StartDate;
+		}, $upcoming);
+		$end_dates = array_map(function($occurrence){
+			return $occurrence->EndDate;
+		}, $upcoming);
+
+		// We have to create placeholders for the start/end dates so we can use them with the $wpdb->prepare method
+		// i.e. %s, %s, %s...
+		$in_clause_placeholders = array_fill( 0, count( $upcoming ), '%s' );
+		$in_clause_format = implode( ', ', $in_clause_placeholders );
+
+		// Create the prepare array, since we'll pass it as variable instead of sprintf type.
+		// @TODO Probably a more elegant way to do this.
+
+		$prepare = $end_dates;
+		$prepare[] = $schedule['start']->modify('+1 second')->format( 'H:i:s' );
+		$prepare[] = $schedule['end']->modify('+1 second')->format( 'H:i:s' );
+		$prepare = array_merge( $prepare, $start_dates );
+		$prepare[] = $schedule['start']->modify('-2 second')->format( 'H:i:s' );
+		$prepare[] = $schedule['end']->modify('-2 second')->format( 'H:i:s' );
+		$prepare = array_merge( $prepare, $start_dates );
+		$prepare = array_merge( $prepare, $end_dates );
+		$prepare[] = $schedule['start']->modify('+1 second')->format( 'H:i:s' );
+		$prepare[] = $schedule['end']->modify('+1 second')->format( 'H:i:s' );
+		$prepare[] = $schedule['start']->format( 'H:i:s' );
+		$prepare[] = $schedule['end']->format( 'H:i:s' );
+		$prepare[] = $venue;
+		$prepare[] = $event_ID;
+
+		// Run the query to look for conflicts
+		// First WHERE checks to see if any events end date/time is during our event
+		// Second WHERE checks to see if any events start date/time is during our event
+		// Last WHERE checks to see if the any events with the same start and end date either start/end during our event or before/after it
+		$conflicts = $wpdb->get_results( $wpdb->prepare(
+			"SELECT * from {$wpdb->prefix}eo_events
+				LEFT JOIN $wpdb->term_relationships ON ( post_id = $wpdb->term_relationships.object_id )
+				LEFT JOIN $wpdb->term_taxonomy ON ( $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id )
+				WHERE  (
+					( EndDate IN ({$in_clause_format}) AND ( FinishTime BETWEEN %s AND %s ) )
+				OR
+					( StartDate IN ({$in_clause_format}) AND ( StartTime BETWEEN %s AND %s ) )
+				OR
+					( StartDate IN ({$in_clause_format}) AND EndDate IN ({$in_clause_format})
+					AND (
+						( StartTime < %s AND FinishTime > %s )
+						OR
+						( StartTime > %s AND FinishTime < %s ) )
+					)
+				)
+				AND taxonomy = 'event-venue'
+				AND term_id = %d
+				AND post_id <> %d",
+			$prepare
+		) );
+
+		if ( ! $conflicts ) {
+			return false;
+		}
+
+		$conflicts_html = array();
+		foreach ( $conflicts as $conflict ) {
+			// If the event conflict is an all day event, it's probably not the kind of conflict we're looking for.
+			if ( eo_is_all_day( $conflict->post_id ) ) {
+				continue;
+			}
+			$conflicts_html[] = sprintf(
+				'<li><a href="%s">%s</a> starts at %s and ends at %s on %s in %s.</li>',
+				get_edit_post_link( $conflict->post_id ),
+				get_the_title( $conflict->post_id ),
+				date( 'g:i a', strtotime( $conflict->StartTime ) ),
+				date( 'g:i a', strtotime( $conflict->FinishTime ) ),
+				date( 'm/d/y', strtotime( $conflict->StartDate ) ),
+				eo_get_venue_name( eo_get_venue( $conflict->post_id ) )
+			);
+		}
+
+		// If we've looped through all the conflicts and have nothing in the array, we'll bail.
+		if ( empty( $conflicts_html ) ) {
+			return false;
+		}
+		// Build the HTML to add to the message handler.
+		$message_html = '<ul>' . implode( $conflicts_html ) . '</ul>';
+
+		$this->messenger->add_message( 'You have a conflict with the following event(s): <br /><br />' . $message_html );
+
+		return true;
+
+	}
+
+	/**
+	 * Prevent publish of an event by drafting it
+	 * @param  int $event_id The ID of the event
+	 */
+	protected function prevent_publish( $event_id ) {
+		// Remove the save_post hook so we don't end up in an infinite loop
+		remove_action( 'save_post', 'eventorganiser_details_save' );
+
+		// Update the post to a draft
+		// @TODO probably need to check and see if it was pending already so the proper people get notified
+		// if the date of their event is moved
+		wp_update_post( array( 'ID' => $event_id, 'post_status' => 'draft' ) );
+
+		// Change the message to drafted instead of published.
+		add_action( 'redirect_post_location', function( $location, $event_id ) {
+			return add_query_arg( 'message', 10, $location );
+		}, 10, 2);
+
+		// Reapply the action
+		add_action( 'save_post', 'eventorganiser_details_save' );
 	}
 
 }
