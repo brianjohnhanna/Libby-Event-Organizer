@@ -2,7 +2,7 @@
 /*
 Plugin Name: Libby Event Organiser
 Plugin URI: http://meetlibby.com
-Version: 3.1.5
+Version: 3.3.0
 Description: Manage and organize events for libraries. Part of the Libby for Libraries suite of products. Visit MeetLibby.com to learn more.
 Author: Stirling Technologies
 Author URI: http://stboston.com
