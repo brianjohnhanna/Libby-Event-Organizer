@@ -284,7 +284,7 @@ class Libby_Events {
 		 * Process booking form submissions with our custom values
 		 */
 		$this->loader->add_action( 'eventorganiser_validate_fes_form_submission', $plugin_public, 'eo_fes_process_form_submission', 10, 1 );
-		$this->loader->add_action( 'eventorganiser_fes_submitted_event', $plugin_public, 'eo_fes_save_custom_vars', 10, 2 );
+		$this->loader->add_action( 'eventorganiser_fes_submitted_event', $plugin_public, 'eo_fes_save_custom_vars', 10, 3 );
 
 		/**
 		 * Filter out the EO branding on the email template and replace with Libby branding.

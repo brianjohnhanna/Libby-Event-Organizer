@@ -119,10 +119,10 @@ class Libby_Events_Public {
 	 * @param  int $venue_id the ID of the venue
 	 * @return array $hours The hour types
 	 */
-	public function get_venue_hours( $venue_id, $date ) {
+	public function get_venue_hours( $venue_id, $date = null ) {
 		$branch_id = $this->get_branch_id_by_venue_id( $venue_id );
-		$hours = libpress_get_hours( (int)$branch_id );
-		return $hours[0]['hours'];
+		$hours = libby_get_hours( (int)$branch_id );
+		return reset($hours);
 	}
 
 	/**
@@ -131,7 +131,11 @@ class Libby_Events_Public {
 	 * @return json $venue_options
 	 */
 	public function get_venue_details_ajax() {
+		if (empty($_GET['venueId']) || !is_numeric($_GET['venueId'])) {
+			return new \WP_Error('invalid-request', 'venueId must be valid ID');
+		}
 		$venue_id = $_GET['venueId'];
+
 		$venue_options = array(
 			'description' => eo_get_venue_description( (int)$venue_id ),
 			'setup' => eo_get_venue_meta( $venue_id, '_libby_setup_options', true ),
