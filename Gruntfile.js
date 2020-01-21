@@ -53,6 +53,7 @@ module.exports = function(grunt) {
                     '**/*.php',
                     '!node_modules/**',
                     '!dist/**',
+                    '!docker/**',
                     '!tests/**',
                     '!features/**',
                     '!vendor/**',
@@ -146,12 +147,13 @@ module.exports = function(grunt) {
                 src: [
                     '**',
                     '!*.xml', '!*.log', //any config/log files
-                    '!node_modules/**', '!Gruntfile.js', '!package.json', //npm/Grunt
+                    '!node_modules/**', '!Gruntfile.js', '!package.json', '!package-lock.json', //npm/Grunt
                     '!assets/**', //wp-org assets
                     '!dist/**', //build directory
                     '!.git/**', //version control
+                    '!docker/**', '!docker-compose.yml', //docker
                     '!tests/**', '!bin/**', '!phpunit.xml', //unit test
-                    '!features/**', '!behat.yml', //behat test
+                    '!features/**', '!behat.yml', '!failed-scenerios/**', //behat test
                     '!vendor/**', '!composer.lock', '!composer.phar', '!composer.json', //composer
                     '!.*', '!**/*~', //hidden files
                     '!CONTRIBUTING.md',
@@ -261,6 +263,7 @@ module.exports = function(grunt) {
                     '**/*.php',
                     '!node_modules/**',
                     '!dist/**',
+                    '!docker/**',
                     '!tests/**',
                     '!vendor/**',
                     '!*~'
@@ -318,6 +321,7 @@ module.exports = function(grunt) {
                     '!node_modules/**',
                     '!dist/**',
                     '!tests/**',
+                    '!docker/**',
                     '!features/**',
                     '!vendor/**',
                     '!*~',
@@ -387,12 +391,12 @@ module.exports = function(grunt) {
 
     grunt.registerTask('docs', ['shell:makeDocs']);
 
-    grunt.registerTask('test', ['phpunit', 'jshint']);
+    grunt.registerTask('test', ['jshint']);
 
     grunt.registerTask('test_build', ['gitinfo', 'clean', 'uglify', 'cssjanus', 'cssmin', 'copy']);
 
     grunt.registerTask('build', ['gitinfo', 'test', 'clean', 'uglify', 'cssjanus', 'cssmin', 'pot', 'po2mo', 'wp_readme_to_markdown', 'copy']);
 
-    grunt.registerTask('deploy', ['checkbranch:master', 'checkrepo', 'build', 'wp_deploy']);
+    grunt.registerTask('deploy', ['checkbranch:master', 'build', 'wp_deploy']);
 
 };

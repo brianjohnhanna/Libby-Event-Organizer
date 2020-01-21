@@ -606,10 +606,14 @@ function eo_get_venues($args=array()){
 			$args['longitude'] = $args['longtitude'];
 		}
 
+		$args['name'] = $name;
+
+		$args = apply_filters('eventorganiser_pre_insert_venue', $args);
+
 		$term_args = array_intersect_key($args, array('name'=>'','term_id'=>'','term_group'=>'','term_taxonomy_id'=>'','alias_of'=>'','parent'=>0,'slug'=>'','count'=>''));
 		$meta_args = array_intersect_key($args, array('description'=>'','address'=>'','postcode'=>'','city'=>'','state'=>'','country'=>'','latitude'=>'','longitude'=>''));
 
-		$resp = wp_insert_term($name,'event-venue',$term_args);
+		$resp = wp_insert_term($args['name'], 'event-venue', $term_args);
 
 		if(is_wp_error($resp)){
 			return $resp;
@@ -709,9 +713,13 @@ function eo_get_venues($args=array()){
  * @link http://wp-event-organiser.com/blog/tutorial/changing-the-venue-map-icon/ Changing the venue map icon
  * @link http://www.stephenharris.info/2012/event-organiser-1-6-whats-new/ Examples of using eo_get_venue_map()
  * @param mixed $venue_slug_or_id The venue ID as an integer. Or Slug as string. Uses venue of current event if empty.
- * @return string The markup of the map. False is no venue found.
+ * @return string The markup of the map. False is no venue found or map is disabled.
  */
 function eo_get_venue_map( $venue_slug_or_id = '', $args = array() ){
+
+		if ('none' === eventorganiser_get_option('map_provider')) {
+			return false;
+		}
 
 		//Cast as array to allow multi venue support
 		if ( '%all%' == $venue_slug_or_id || is_array( $venue_slug_or_id ) && in_array( '%all%', $venue_slug_or_id ) ) {

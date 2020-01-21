@@ -52,6 +52,9 @@
 }
 
 /* Event edit page */
+label[for="eo-event-recurrring-notice"] {
+	font-weight: 500;
+}
 .eo-days-of-week li{
 	display: inline-block;
 	margin-right: 8px;
@@ -69,6 +72,10 @@
 #eo-day-of-month-repeat,
 #eo-schedule-last-date-wrapper{
 	margin: 1em 0 1em 0;
+}
+.ui-datepicker.eo-datepicker {
+	/*Ensures datepicker appears above Leaflet (OSM) */
+	z-index:400!important;
 }
 .eo-add-new-venue{
 	display: none;
