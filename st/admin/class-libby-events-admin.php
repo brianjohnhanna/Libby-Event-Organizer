@@ -394,8 +394,10 @@ class Libby_Events_Admin {
 		}
 		$this->event_conflicts_checked = true;
 
+		$skip_all_day_conflicts = apply_filters('libby/events/skip-all-day-conflicts', true);
+
 		// If the event is all day, let's bail... Probably not looking for those kinds of conflicts.
-		if ( eo_is_all_day( $event_ID ) ) {
+		if ( $skip_all_day_conflicts && eo_is_all_day( $event_ID ) ) {
 			return false;
 		}
 
@@ -479,7 +481,7 @@ class Libby_Events_Admin {
 		$conflicts_html = array();
 		foreach ( $conflicts as $conflict ) {
 			// If the event conflict is an all day event, it's probably not the kind of conflict we're looking for.
-			if ( eo_is_all_day( $conflict->post_id ) ) {
+			if ( $skip_all_day_conflicts && eo_is_all_day( $conflict->post_id ) ) {
 				continue;
 			}
 			$conflicts_html[] = sprintf(
