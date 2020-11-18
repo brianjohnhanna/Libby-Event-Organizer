@@ -2,7 +2,7 @@
 /*
 Plugin Name: Libby Event Organiser
 Plugin URI: http://meetlibby.com
-Version: 3.7.4
+Version: 3.10.1
 Description: Manage and organize events for libraries. Part of the Libby for Libraries suite of products. Visit MeetLibby.com to learn more.
 Author: Stirling Technologies
 Author URI: http://stboston.com
@@ -38,7 +38,7 @@ Domain Path: /languages
 /**
  * Set the plug-in database version
  */
-define( 'EVENT_ORGANISER_VER', '3.9.0' );
+define( 'EVENT_ORGANISER_VER', '3.10.1' );
 
 add_action( 'after_setup_theme', '_eventorganiser_set_constants' );
 function _eventorganiser_set_constants() {

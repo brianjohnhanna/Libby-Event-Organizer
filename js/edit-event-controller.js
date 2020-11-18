@@ -67,7 +67,7 @@ eventOrganiserSchedulePicker.init({
 	startday: EO_Ajax_Event.startday,
 	schedule: window.eventOrganiserSchedule,
 	locale: EO_Ajax_Event.locale,
-	editable: ( $("#eo-event-recurrence").val() == 'once' )//if recurring set to false
+	editable: ( $("#eo-event-recurrence").val() == 'once' || $("#eo-event-recurrring-notice").is(':checked') )//if recurring set to false
 });
 
 //Edit recurrinng dates
@@ -122,12 +122,11 @@ $.widget("ui.combobox", {
 					$("#eventorganiser_detail .eo-add-new-venue").hide();
 				}
 
-				if (!eovenue.is_map_enabled()) {
-					return;
+				if (eovenue.is_map_enabled()) {
+					eovenue.get_map( 'venuemap' ).marker[0].setPosition( {
+						'lat': parseFloat(b.item.venue_lat), 'lng': parseFloat(b.item.venue_lng)
+					} );
 				}
-				eovenue.get_map( 'venuemap' ).marker[0].setPosition( {
-					'lat': parseFloat(b.item.venue_lat), 'lng': parseFloat(b.item.venue_lng)
-				} );
 			}
 			$hiddenEl.val( b.item.term_id );
 		}
