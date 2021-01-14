@@ -77,7 +77,6 @@ class Libby_Events {
 		$this->version = '1.0.0';
 
 		$this->load_dependencies();
-		$this->init_update_check();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
 
@@ -166,26 +165,7 @@ class Libby_Events {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-libby-events-shortcodes.php';
 
-		/**
-		 * The library responsible for checking for updates against our updates server
-		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/update-check/plugin-update-checker.php';
-
 		$this->loader = new Libby_Events_Loader();
-
-	}
-
-	public function init_update_check() {
-		$updateCheck = PucFactory::buildUpdateChecker(
-		    'http://stboston.com/updates/?action=get_metadata&slug=' . LIBBY_PLUGIN_SLUG,
-		    plugin_dir_path( dirname( dirname( __FILE__ ) ) ) . 'event-organiser.php',
-				LIBBY_PLUGIN_SLUG
-		);
-
-		$updateCheck->addQueryArgFilter(function( $queryArgs ){
-			$queryArgs['license_key'] = md5( get_site_url() );
-			return $queryArgs;
-		});
 	}
 
 	/**
