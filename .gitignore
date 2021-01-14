@@ -18,3 +18,4 @@ node_modules
 !tests/data/languages/*.mo
 phpmd.log
 !lib/**/*
+.DS_Store
