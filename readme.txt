@@ -2,7 +2,7 @@
 Contributors: brianjohnhanna, stephenharris
 Tags: events, event, event categories, event organizer, events calendar, event management, ical, locations, google map, widget, venues, maps, gigs, shows,
 Requires at least: 3.8.0
-Tested up to: 5.5.1
+Tested up to: 5.6.0
 Stable tag: {{version}}
 License: GPLv3
 

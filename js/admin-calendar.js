@@ -225,7 +225,7 @@ eventorganiser.versionCompare = function(left, right) {
 	});
 
 	/* Update time format screen option */
-	$('#eofc_time_format').change(function () {
+	$('#eofc_time_format').on('change', function () {
 		format = ($('#eofc_time_format').is(":checked") ? 'HH:mm' : 'h:mmtt');
 		calendar.fullCalendar('option', 'timeFormat', format);
 		$.post(ajaxurl, {
@@ -343,7 +343,7 @@ eventorganiser.versionCompare = function(left, right) {
 			calendar.fullCalendar('gotoDate', new Date(Date.parse(dateText)));
 		}
 	});
-	$('button.ui-datepicker-trigger').button().addClass('fc-button');
+	$('button.ui-datepicker-trigger').button().addClass('fc-button').addClass('fc-state-default');
         
     /* Venue drop-down in modal */
 	$.widget("ui.combobox", {
@@ -455,7 +455,7 @@ eventorganiser.versionCompare = function(left, right) {
 
 		return $("<span class='fc-header-dropdown filter-venue'></span>").append(html);
 	}
-        $(".eo-cal-filter").change(function () {
+        $(".eo-cal-filter").on('change', function () {
             calendar.fullCalendar('rerenderEvents');
         });
         $('.filter-venue .eo-cal-filter').selectmenu({
@@ -791,10 +791,10 @@ $.widget("ui.selectmenu", {
 				}
 				var thisA = $( '<a/>', thisAAttr )
 					.bind( 'focus.selectmenu', function() {
-						$( this ).parent().mouseover();
+						$( this ).parent().trigger( "mouseover" );
 					})
 					.bind( 'blur.selectmenu', function() {
-						$( this ).parent().mouseout();
+						$( this ).parent().trigger( "mouseout" );
 					});
 				var thisLi = $( '<li/>', thisLiAttr )
 					.append( thisA )
